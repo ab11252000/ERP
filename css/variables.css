@@ -1,0 +1,76 @@
+:root {
+  /* Primary Palette - Warm Luxury */
+  --color-bg: #FDFBF7;
+  --color-bg-alt: #F5F2EC;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #FAF8F4;
+
+  /* Text Colors */
+  --color-text: #1A1A1A;
+  --color-text-secondary: #5C5C5C;
+  --color-text-muted: #8A8A8A;
+
+  /* Accent Colors */
+  --color-accent: #C4A962;
+  --color-accent-hover: #B39952;
+  --color-accent-light: #F0E9D5;
+
+  /* Status Colors */
+  --color-success: #4A7C59;
+  --color-warning: #C4862B;
+  --color-danger: #B54A4A;
+  --color-info: #5A7A8A;
+
+  /* Borders & Shadows */
+  --color-border: #E5E2DC;
+  --color-border-light: #F0EDE7;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+
+  /* Typography */
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* Z-index */
+  --z-dropdown: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #141414;
+    --color-bg-alt: #1C1C1C;
+    --color-surface: #242424;
+    --color-surface-hover: #2A2A2A;
+    --color-text: #F5F5F5;
+    --color-text-secondary: #A0A0A0;
+    --color-text-muted: #6A6A6A;
+    --color-border: #333333;
+    --color-border-light: #2A2A2A;
+    --color-accent-light: #3D3525;
+  }
+}
