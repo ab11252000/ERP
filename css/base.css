@@ -337,8 +337,8 @@ img {
 
 .cloud-status {
   position: fixed;
-  top: 14px;
-  right: 16px;
+  bottom: 16px;
+  left: 16px;
   z-index: 10000;
   display: inline-flex;
   align-items: center;
@@ -378,8 +378,8 @@ img {
 
 .cloud-status-tooltip {
   position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  bottom: calc(100% + 8px);
+  left: 0;
   min-width: 140px;
   padding: 8px 12px;
   background: var(--color-bg-card);
@@ -407,20 +407,20 @@ img {
 .cloud-status-tooltip::before {
   content: '';
   position: absolute;
-  top: -6px;
-  right: 16px;
+  bottom: -6px;
+  left: 16px;
   width: 10px;
   height: 10px;
   background: var(--color-bg-card);
-  border-left: 1px solid var(--color-border);
-  border-top: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
   transform: rotate(45deg);
 }
 
 @media (max-width: 768px) {
   .cloud-status {
-    top: 10px;
-    right: 10px;
+    bottom: 10px;
+    left: 10px;
     padding: 7px 10px;
     font-size: 0.75rem;
   }
