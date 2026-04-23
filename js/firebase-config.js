@@ -527,20 +527,15 @@ window.firebaseConfig = firebaseConfig;
     });
   }
 
-  async function waitForAuthGate(timeoutMs = 4000) {
-    const start = Date.now();
-
-    while (Date.now() - start < timeoutMs) {
-      if (window.authReady && typeof window.authReady.then === 'function') {
-        try {
-          await window.authReady;
-        } catch (error) {
-          console.error('Auth gate failed before store initialization:', error);
-        }
-        return;
-      }
-
+  async function waitForAuthGate() {
+    while (!window.authReady || typeof window.authReady.then !== 'function') {
       await new Promise(resolve => window.setTimeout(resolve, 25));
+    }
+
+    try {
+      await window.authReady;
+    } catch (error) {
+      console.error('Auth gate failed before store initialization:', error);
     }
   }
 

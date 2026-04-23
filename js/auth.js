@@ -268,6 +268,7 @@
         }
 
         showLogin();
+        setLoginMessage('');
 
         if (user && !isAuthorizedForPage(user) && !isHandlingUnauthorizedUser) {
           isHandlingUnauthorizedUser = true;
@@ -282,10 +283,6 @@
           return;
         }
 
-        if (!didResolve) {
-          didResolve = true;
-          resolve(null);
-        }
       });
     });
   }
