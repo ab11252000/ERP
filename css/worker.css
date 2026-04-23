@@ -373,16 +373,19 @@ body {
 }
 
 .spec-tag.quantity {
-  background: var(--color-accent);
-  color: white;
+  background: #E5E0D5;
+  color: var(--color-text);
   font-size: 0.875rem;
   font-weight: 700;
   padding: 4px 10px;
 }
 
 .spec-tag.color {
-  background: var(--color-accent-light);
-  color: var(--color-accent-hover);
+  background: #DDD8CC;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 4px 10px;
 }
 
 .workflow-actions,
@@ -723,6 +726,10 @@ body {
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+.group-count-has-items {
+  background: #e53935;
 }
 
 .group-delete-btn {

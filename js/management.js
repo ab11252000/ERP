@@ -52,7 +52,8 @@
   let unsubscribe = null;
   let productCounter = 0;
 
-  function init() {
+  async function init() {
+    await window.erpStore.ready;
     orders = window.erpStore.loadOrders();
     bindEvents();
     setCurrentDate();

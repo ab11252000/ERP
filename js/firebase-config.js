@@ -1,10 +1,11 @@
 const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT.appspot.com',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID'
+  apiKey: 'AIzaSyA_M1J9FnEUZ8Km0MncJViVjSffrNN0U8o',
+  authDomain: 'serp-9af4a.firebaseapp.com',
+  projectId: 'serp-9af4a',
+  storageBucket: 'serp-9af4a.firebasestorage.app',
+  messagingSenderId: '496535186119',
+  appId: '1:496535186119:web:30119715ed4f3829c02ce2',
+  measurementId: 'G-GYME30GBMY'
 };
 
 window.firebaseConfig = firebaseConfig;
@@ -48,6 +49,8 @@ window.firebaseConfig = firebaseConfig;
 
   function reviveDate(value) {
     if (!value) return null;
+    if (typeof value?.toDate === 'function') return value.toDate();
+    if (typeof value?.seconds === 'number') return new Date(value.seconds * 1000);
     return value instanceof Date ? value : new Date(value);
   }
 
@@ -116,6 +119,10 @@ window.firebaseConfig = firebaseConfig;
 
     hasChairAddonWork(order) {
       return (order?.accessories?.items || []).some(item => item.name === '腳盆' || item.name === '小桌子');
+    },
+
+    hasSmallTable(order) {
+      return (order?.accessories?.items || []).some(item => item.name === '小桌子');
     },
 
     hasYouAccessoryWork(order) {
@@ -202,7 +209,8 @@ window.firebaseConfig = firebaseConfig;
 
     needsYanAction(order) {
       const category = order?.product?.category;
-      return category === 'massage-chair' || this.requiresYanMaterial(order) || this.isRepairCategory(category);
+      const isAccessoryWithSmallTable = category === 'accessory-only' && this.hasSmallTable(order);
+      return category === 'massage-chair' || this.requiresYanMaterial(order) || this.isRepairCategory(category) || isAccessoryWithSmallTable;
     },
 
     getRelevantWorkers(order) {
@@ -423,8 +431,49 @@ window.firebaseConfig = firebaseConfig;
   window.utils = utils;
 
   const defaultOrders = [];
+  const FIREBASE_SDK_URLS = [
+    'https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js'
+  ];
+  const FIRESTORE_COLLECTION = 'erpOrders';
+  const STORE_STATUS_EVENT = 'xiangyue-store-status';
+  const CLOUD_SOURCE_OF_TRUTH = true;
 
-  function loadRawOrders() {
+  let cachedOrders = [];
+  let storeMode = 'local';
+  let firebaseDb = null;
+  let firebaseLoaderPromise = null;
+  let storeReadyPromise = null;
+  let storeStatus = {
+    mode: 'local',
+    isReady: false,
+    isCollaborative: false,
+    error: null
+  };
+
+  function normalizeOrders(list) {
+    return (Array.isArray(list) ? list : []).map(order => utils.normalizeOrder(order));
+  }
+
+  function cloneStatus() {
+    return Object.assign({}, storeStatus);
+  }
+
+  function emitStoreStatus() {
+    window.erpStoreStatus = cloneStatus();
+    window.dispatchEvent(new CustomEvent(STORE_STATUS_EVENT, { detail: cloneStatus() }));
+  }
+
+  function setStoreStatus(nextStatus) {
+    storeStatus = Object.assign({}, storeStatus, nextStatus);
+    emitStoreStatus();
+  }
+
+  function emitOrdersChanged() {
+    window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
+  }
+
+  function loadLocalRawOrders() {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (!stored) return defaultOrders;
@@ -435,42 +484,378 @@ window.firebaseConfig = firebaseConfig;
     }
   }
 
+  function loadLocalOrders() {
+    return normalizeOrders(loadLocalRawOrders());
+  }
+
+  function isCloudConfigured() {
+    return hasConfiguredFirebase(window.firebaseConfig);
+  }
+
+  function persistLocalOrders(nextOrders) {
+    const normalized = normalizeOrders(nextOrders);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+    return normalized;
+  }
+
+  function updateCache(nextOrders, options = {}) {
+    const normalized = normalizeOrders(nextOrders);
+    cachedOrders = normalized;
+
+    if (options.persistLocal !== false) {
+      persistLocalOrders(normalized);
+    }
+
+    if (options.emitChange !== false) {
+      emitOrdersChanged();
+    }
+
+    return cachedOrders;
+  }
+
+  function hasConfiguredFirebase(config) {
+    if (!config || typeof config !== 'object') return false;
+
+    const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'appId'];
+    return requiredKeys.every(key => {
+      const value = String(config[key] || '').trim();
+      return value &&
+        !value.startsWith('YOUR_') &&
+        !value.includes('YOUR_PROJECT') &&
+        !value.includes('YOUR_SENDER_ID') &&
+        !value.includes('YOUR_APP_ID');
+    });
+  }
+
+  async function waitForAuthGate(timeoutMs = 4000) {
+    const start = Date.now();
+
+    while (Date.now() - start < timeoutMs) {
+      if (window.authReady && typeof window.authReady.then === 'function') {
+        try {
+          await window.authReady;
+        } catch (error) {
+          console.error('Auth gate failed before store initialization:', error);
+        }
+        return;
+      }
+
+      await new Promise(resolve => window.setTimeout(resolve, 25));
+    }
+  }
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[data-sdk-src="${src}"]`);
+      if (existing) {
+        if (existing.dataset.loaded === 'true') {
+          resolve();
+          return;
+        }
+
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.dataset.sdkSrc = src;
+      script.addEventListener('load', () => {
+        script.dataset.loaded = 'true';
+        resolve();
+      }, { once: true });
+      script.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
+      document.head.appendChild(script);
+    });
+  }
+
+  async function ensureFirebaseDb() {
+    if (!hasConfiguredFirebase(window.firebaseConfig)) {
+      return null;
+    }
+
+    if (firebaseDb) {
+      return firebaseDb;
+    }
+
+    if (!firebaseLoaderPromise) {
+      firebaseLoaderPromise = (async () => {
+        for (const src of FIREBASE_SDK_URLS) {
+          await loadScript(src);
+        }
+
+        if (!window.firebase) {
+          throw new Error('Firebase SDK did not initialize correctly.');
+        }
+
+        const pageApp = typeof window.getFirebaseAppForCurrentPage === 'function'
+          ? window.getFirebaseAppForCurrentPage()
+          : null;
+
+        let firebaseApp = pageApp;
+
+        if (!firebaseApp) {
+          const hasDefaultApp = window.firebase.apps?.some(app => app.name === '[DEFAULT]');
+          firebaseApp = hasDefaultApp
+            ? window.firebase.app()
+            : window.firebase.initializeApp(window.firebaseConfig);
+        }
+
+        firebaseDb = firebaseApp.firestore();
+        return firebaseDb;
+      })();
+    }
+
+    return firebaseLoaderPromise;
+  }
+
+  function serializeOrderForRemote(order, sortIndex) {
+    const serialized = JSON.parse(JSON.stringify(order));
+    serialized.sortIndex = sortIndex;
+    serialized.updatedAt = new Date();
+    return serialized;
+  }
+
+  function deserializeRemoteOrder(doc) {
+    const data = doc.data() || {};
+    const normalized = Object.assign({}, data, { orderId: data.orderId || doc.id });
+    delete normalized.sortIndex;
+    delete normalized.updatedAt;
+    return normalized;
+  }
+
+  async function loadRemoteOrders(db) {
+    const snapshot = await db.collection(FIRESTORE_COLLECTION).get();
+    return snapshot.docs
+      .slice()
+      .sort((a, b) => {
+        const aIndex = Number(a.data()?.sortIndex ?? Number.MAX_SAFE_INTEGER);
+        const bIndex = Number(b.data()?.sortIndex ?? Number.MAX_SAFE_INTEGER);
+        if (aIndex !== bIndex) return aIndex - bIndex;
+        return String(a.id).localeCompare(String(b.id));
+      })
+      .map(deserializeRemoteOrder);
+  }
+
+  function watchRemoteOrders(callback) {
+    if (!firebaseDb) return () => {};
+
+    return firebaseDb.collection(FIRESTORE_COLLECTION).onSnapshot(snapshot => {
+      const nextOrders = snapshot.docs
+        .slice()
+        .sort((a, b) => {
+          const aIndex = Number(a.data()?.sortIndex ?? Number.MAX_SAFE_INTEGER);
+          const bIndex = Number(b.data()?.sortIndex ?? Number.MAX_SAFE_INTEGER);
+          if (aIndex !== bIndex) return aIndex - bIndex;
+          return String(a.id).localeCompare(String(b.id));
+        })
+        .map(deserializeRemoteOrder);
+
+      updateCache(nextOrders);
+      setStoreStatus({
+        mode: 'firebase',
+        isReady: true,
+        isCollaborative: true,
+        error: null
+      });
+
+      if (typeof callback === 'function') {
+        callback(cachedOrders);
+      }
+    }, error => {
+      console.error('Firestore subscription failed:', error);
+      setStoreStatus({
+        mode: 'firebase',
+        isReady: true,
+        isCollaborative: true,
+        error: error.message || String(error)
+      });
+    });
+  }
+
+  async function persistRemoteOrders(nextOrders, previousOrders = cachedOrders) {
+    const db = await ensureFirebaseDb();
+    if (!db) return;
+
+    const normalized = normalizeOrders(nextOrders);
+    const previousIds = new Set(normalizeOrders(previousOrders).map(order => String(order.orderId || '')).filter(Boolean));
+    const nextIds = new Set();
+    const batch = db.batch();
+
+    normalized.forEach((order, index) => {
+      const orderId = String(order.orderId || '').trim();
+      if (!orderId) return;
+      nextIds.add(orderId);
+      const ref = db.collection(FIRESTORE_COLLECTION).doc(orderId);
+      batch.set(ref, serializeOrderForRemote(order, index));
+    });
+
+    previousIds.forEach(orderId => {
+      if (nextIds.has(orderId)) return;
+      const ref = db.collection(FIRESTORE_COLLECTION).doc(orderId);
+      batch.delete(ref);
+    });
+
+    await batch.commit();
+  }
+
+  async function migrateLocalOrdersToRemote(db, localOrders) {
+    if (!localOrders.length) return;
+    const remoteOrders = await loadRemoteOrders(db);
+    if (remoteOrders.length) return;
+    await persistRemoteOrders(localOrders, []);
+  }
+
+  async function initializeStore() {
+    await waitForAuthGate();
+    cachedOrders = loadLocalOrders();
+
+    if (!isCloudConfigured()) {
+      updateCache(cachedOrders, { persistLocal: false, emitChange: false });
+      setStoreStatus({
+        mode: 'local',
+        isReady: true,
+        isCollaborative: false,
+        error: null
+      });
+      return cachedOrders;
+    }
+
+    try {
+      storeMode = 'firebase';
+      const db = await ensureFirebaseDb();
+      await migrateLocalOrdersToRemote(db, cachedOrders);
+
+      const remoteOrders = await loadRemoteOrders(db);
+      updateCache(remoteOrders, { emitChange: false });
+      storeMode = 'firebase';
+
+      setStoreStatus({
+        mode: 'firebase',
+        isReady: true,
+        isCollaborative: true,
+        error: null
+      });
+
+      return cachedOrders;
+    } catch (error) {
+      console.error('Cloud store initialization failed:', error);
+      storeMode = 'firebase';
+      cachedOrders = CLOUD_SOURCE_OF_TRUTH ? [] : loadLocalOrders();
+      setStoreStatus({
+        mode: 'firebase',
+        isReady: true,
+        isCollaborative: true,
+        error: CLOUD_SOURCE_OF_TRUTH
+          ? '無法連線雲端資料庫，已停用本機備援。'
+          : (error.message || String(error))
+      });
+      return cachedOrders;
+    }
+  }
+
   const erpStore = {
+    ready: null,
+
     loadOrders() {
-      return loadRawOrders().map(order => utils.normalizeOrder(order));
+      return normalizeOrders(cachedOrders);
     },
 
     saveOrders(nextOrders) {
-      const normalized = nextOrders.map(order => utils.normalizeOrder(order));
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-      window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
+      if (isCloudConfigured() && CLOUD_SOURCE_OF_TRUTH && !firebaseDb) {
+        setStoreStatus({
+          mode: 'firebase',
+          isReady: true,
+          isCollaborative: true,
+          error: '雲端資料庫尚未就緒，未寫入任何本機資料。'
+        });
+        return Promise.resolve(this.loadOrders());
+      }
+
+      const previousOrders = cachedOrders.slice();
+      const normalized = updateCache(nextOrders);
+
+      if (storeMode !== 'firebase') {
+        return Promise.resolve(normalized);
+      }
+
+      return persistRemoteOrders(normalized, previousOrders).catch(async error => {
+        console.error('Failed to save orders to Firestore:', error);
+        setStoreStatus({
+          mode: 'firebase',
+          isReady: true,
+          isCollaborative: true,
+          error: CLOUD_SOURCE_OF_TRUTH
+            ? '寫入雲端失敗，本機變更已回復。'
+            : (error.message || String(error))
+        });
+
+        if (firebaseDb) {
+          try {
+            const remoteOrders = await loadRemoteOrders(firebaseDb);
+            updateCache(remoteOrders);
+          } catch (reloadError) {
+            console.error('Failed to reload Firestore orders:', reloadError);
+          }
+        }
+
+        return cachedOrders;
+      });
     },
 
     reset() {
-      this.saveOrders(defaultOrders);
+      return this.saveOrders(defaultOrders);
     },
 
     subscribe(callback) {
       const handler = () => callback(this.loadOrders());
       const storageHandler = event => {
-        if (event.key === STORAGE_KEY) handler();
+        if (event.key === STORAGE_KEY) {
+          cachedOrders = loadLocalOrders();
+          handler();
+        }
       };
+
+      let active = true;
+      let remoteCleanup = null;
 
       window.addEventListener(CHANGE_EVENT, handler);
       window.addEventListener('storage', storageHandler);
 
+      Promise.resolve(this.ready).then(() => {
+        if (!active || storeMode !== 'firebase') return;
+        remoteCleanup = watchRemoteOrders();
+      });
+
       return () => {
+        active = false;
         window.removeEventListener(CHANGE_EVENT, handler);
         window.removeEventListener('storage', storageHandler);
+        if (typeof remoteCleanup === 'function') {
+          remoteCleanup();
+        }
       };
+    },
+
+    getInfo() {
+      return cloneStatus();
     }
   };
 
   window.erpStore = erpStore;
+  window.erpStoreStatus = cloneStatus();
 
   if (!window.localStorage.getItem(STORAGE_KEY)) {
-    erpStore.saveOrders(defaultOrders);
+    persistLocalOrders(defaultOrders);
   }
 
-  window.mockOrders = erpStore.loadOrders();
+  storeReadyPromise = initializeStore();
+  erpStore.ready = storeReadyPromise;
+
+  storeReadyPromise.then(() => {
+    window.mockOrders = erpStore.loadOrders();
+    emitOrdersChanged();
+  });
 })();

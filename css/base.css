@@ -334,3 +334,53 @@ img {
   background: var(--color-accent-light);
   color: var(--color-text);
 }
+
+.cloud-status {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  z-index: 10000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.cloud-status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.cloud-status.is-success {
+  color: var(--color-success);
+  border-color: rgba(74, 124, 89, 0.2);
+}
+
+.cloud-status.is-error {
+  color: var(--color-danger);
+  border-color: rgba(181, 74, 74, 0.2);
+}
+
+.cloud-status.is-pending {
+  color: var(--color-warning);
+  border-color: rgba(196, 134, 43, 0.2);
+}
+
+@media (max-width: 768px) {
+  .cloud-status {
+    top: 10px;
+    right: 10px;
+    padding: 7px 10px;
+    font-size: 0.75rem;
+  }
+}

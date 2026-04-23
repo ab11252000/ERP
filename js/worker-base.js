@@ -106,9 +106,10 @@
     window.erpStore.saveOrders(nextOrders);
   }
 
-  function init(workerConfig) {
+  async function init(workerConfig) {
     config = workerConfig;
     currentScope = config.defaultScope || (config.scopes?.[0]?.id || 'all');
+    await window.erpStore.ready;
     orders = window.erpStore.loadOrders();
     customGroups = loadCustomGroups();
 
@@ -553,7 +554,7 @@
       <details class="order-group" data-group-key="uncategorized" ${isGroupExpanded(status, 'uncategorized') ? 'open' : ''}>
         <summary class="order-group-header">
           <span class="group-name">未分類</span>
-          <span class="group-count">${uncategorized.length}</span>
+          <span class="group-count${uncategorized.length > 0 ? ' group-count-has-items' : ''}">${uncategorized.length}</span>
         </summary>
         <div class="order-group-body">
           ${uncategorized.length ? uncategorized.map(order => renderOrderCard(order, status)).join('') : `<div class="empty-group">${emptyMessage}</div>`}
@@ -566,7 +567,7 @@
         <details class="order-group" data-group-key="${group.id}" ${isGroupExpanded(status, group.id) ? 'open' : ''}>
           <summary class="order-group-header">
             <span class="group-name" data-status="${status}" data-group-id="${group.id}">${group.name}</span>
-            <span class="group-count">${group.orders.length}</span>
+            <span class="group-count${group.orders.length > 0 ? ' group-count-has-items' : ''}">${group.orders.length}</span>
             <button class="group-delete-btn" data-group-id="${group.id}" title="刪除分類">×</button>
           </summary>
           <div class="order-group-body">
@@ -1105,4 +1106,3 @@
 
   return { init };
 })();
-
