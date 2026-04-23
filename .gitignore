@@ -2,3 +2,5 @@
 *.md
 firebase.json
 firestore.rules
+node_modules/
+dist-desktop/
