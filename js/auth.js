@@ -258,6 +258,12 @@
 
       auth.onAuthStateChanged(async user => {
         if (user && isAuthorizedForPage(user)) {
+          try {
+            await user.getIdToken(true);
+          } catch (error) {
+            console.error('Failed to refresh auth token:', error);
+          }
+
           hideLogin();
           setLoginMessage('');
           if (!didResolve) {
