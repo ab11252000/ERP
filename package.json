@@ -2,6 +2,7 @@
   "name": "xiangyue-erp-desktop",
   "version": "1.0.0",
   "private": true,
+  "author": "ab112",
   "description": "Xiangyue ERP desktop management app",
   "main": "electron-main.js",
   "scripts": {
