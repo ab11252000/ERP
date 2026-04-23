@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#FDFBF7">
+  <title>祐</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/worker.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body data-worker="you">
+  <div class="login-overlay active" id="loginOverlay">
+    <div class="login-title">請輸入密碼</div>
+    <div class="pin-box">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+    </div>
+    <button class="login-btn" id="loginBtn">登入</button>
+  </div>
+
+  <div id="appContent">
+  <header class="app-header">
+    <div class="worker-badge you">祐</div>
+    <div class="header-info">
+      <span class="pending-count" id="pendingCount">-- 待處理</span>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" aria-label="重新整理">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 4v6h-6M1 20v-6h6"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+    </button>
+  </header>
+
+  <div class="scope-nav hidden" id="workerScope"></div>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="unprocessed">未處理</button>
+    <button class="tab-btn" data-tab="queued">待處理</button>
+    <button class="tab-btn" data-tab="completed">已完成</button>
+    <button class="tab-btn" data-tab="summary">統整</button>
+  </nav>
+
+  <main class="app-main">
+    <section class="tab-panel" id="summaryPanel">
+      <div class="summary-list" id="summaryList"></div>
+    </section>
+    <section class="tab-panel active" id="unprocessedPanel">
+      <div class="orders-list" id="unprocessedList"></div>
+    </section>
+    <section class="tab-panel" id="queuedPanel">
+      <div class="orders-list" id="queuedList"></div>
+    </section>
+    <section class="tab-panel" id="completedPanel">
+      <div class="completed-list" id="completedList"></div>
+    </section>
+  </main>
+
+
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="drawer" id="orderDrawer">
+    <div class="drawer-header">
+      <button class="drawer-back" id="drawerClose">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 class="drawer-title" id="drawerTitle">訂單詳情</h2>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </div>
+  </div>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cloud-status.js"></script>
+  <script src="js/worker-base.js"></script>
+  <script src="js/worker-you.js"></script>
+</body>
+</html>

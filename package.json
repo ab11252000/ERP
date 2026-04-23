@@ -1,0 +1,44 @@
+{
+  "name": "xiangyue-erp-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "author": "ab112",
+  "description": "Xiangyue ERP desktop management app",
+  "main": "electron-main.js",
+  "scripts": {
+    "desktop:start": "electron .",
+    "desktop:pack": "electron-builder --dir",
+    "desktop:dist": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.xiangyue.erp.management",
+    "productName": "Xiangyue ERP",
+    "directories": {
+      "output": "dist-desktop"
+    },
+    "files": [
+      "index.html",
+      "css/**/*",
+      "js/**/*",
+      "assets/**/*",
+      "manifest.json",
+      "electron-main.js",
+      "electron-preload.js"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  }
+}

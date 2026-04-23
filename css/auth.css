@@ -1,0 +1,75 @@
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-main, #FDFBF7);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.login-overlay.active {
+  display: flex;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.pin-box {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pin-box.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.pin-input {
+  width: 48px;
+  height: 56px;
+  border: 2px solid var(--border-color, #e0dcd4);
+  border-radius: 8px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  background: var(--bg-card, #fff);
+  color: var(--text-primary, #1a1a1a);
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+
+.pin-input:focus {
+  outline: none;
+  border-color: var(--accent, #E07A5F);
+}
+
+.login-btn {
+  padding: 0.75rem 2rem;
+  background: var(--accent, #E07A5F);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.login-btn:hover {
+  background: var(--accent-hover, #c96a52);
+}
+
+#appContent {
+  display: contents;
+}

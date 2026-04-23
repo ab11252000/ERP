@@ -1,0 +1,4 @@
+.claude/
+*.md
+firebase.json
+firestore.rules
