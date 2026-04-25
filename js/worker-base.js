@@ -26,6 +26,7 @@
   let orders = [];
   let customGroups = { unprocessed: [], queued: [] };
   let expandedGroups = { unprocessed: [], queued: [] };
+  let completedGroupBy = 'category';
   let unsubscribe = null;
   const GROUP_STORAGE_KEY = 'xiangyue-worker-groups-v1';
   const GROUPABLE_STATUSES = ['unprocessed', 'queued'];
@@ -666,30 +667,78 @@
       return;
     }
 
-    const grouped = list.reduce((bucket, order) => {
-      const date = window.utils.getWorkerCompletionDate(order, getEffectiveStatusWorker(order));
-      const key = window.utils.formatFullDate(date || new Date());
-      if (!bucket[key]) bucket[key] = [];
-      bucket[key].push(order);
-      return bucket;
-    }, {});
-
-    const dates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
-
-    container.innerHTML = dates.map(date => `
-      <div class="completed-group">
-        <div class="completed-date">${date}</div>
-        <div class="completed-orders">
-          ${grouped[date].map(order => `
-            <div class="completed-row" data-order-id="${order.orderId}">
-              <span class="row-id">${order.orderId}</span>
-              <span class="row-customer">${order.customerName} x${window.utils.orderQuantity(order)}</span>
-              <span class="row-category">${window.utils.getCategoryLabel(order.product.category)}</span>
-            </div>
-          `).join('')}
-        </div>
+    const toggleHtml = `
+      <div class="completed-toggle">
+        <button class="toggle-btn ${completedGroupBy === 'category' ? 'active' : ''}" data-group="category">按產品</button>
+        <button class="toggle-btn ${completedGroupBy === 'date' ? 'active' : ''}" data-group="date">按日期</button>
       </div>
-    `).join('');
+    `;
+
+    let groupedHtml = '';
+
+    if (completedGroupBy === 'category') {
+      const grouped = list.reduce((bucket, order) => {
+        const key = window.utils.getCategoryLabel(order.product.category);
+        if (!bucket[key]) bucket[key] = [];
+        bucket[key].push(order);
+        return bucket;
+      }, {});
+
+      const categories = Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+
+      groupedHtml = categories.map(category => `
+        <div class="completed-group">
+          <div class="completed-date">${category}</div>
+          <div class="completed-orders">
+            ${grouped[category].map(order => {
+              const completedDate = window.utils.getWorkerCompletionDate(order, getEffectiveStatusWorker(order));
+              const dateStr = completedDate ? window.utils.formatDate(completedDate) : '';
+              return `
+                <div class="completed-row" data-order-id="${order.orderId}">
+                  <span class="row-id">${order.orderId}</span>
+                  <span class="row-customer">${order.customerName} x${window.utils.orderQuantity(order)}</span>
+                  <span class="row-date">${dateStr}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `).join('');
+    } else {
+      const grouped = list.reduce((bucket, order) => {
+        const date = window.utils.getWorkerCompletionDate(order, getEffectiveStatusWorker(order));
+        const key = window.utils.formatFullDate(date || new Date());
+        if (!bucket[key]) bucket[key] = [];
+        bucket[key].push(order);
+        return bucket;
+      }, {});
+
+      const dates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+
+      groupedHtml = dates.map(date => `
+        <div class="completed-group">
+          <div class="completed-date">${date}</div>
+          <div class="completed-orders">
+            ${grouped[date].map(order => `
+              <div class="completed-row" data-order-id="${order.orderId}">
+                <span class="row-id">${order.orderId}</span>
+                <span class="row-customer">${order.customerName} x${window.utils.orderQuantity(order)}</span>
+                <span class="row-category">${window.utils.getCategoryLabel(order.product.category)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    container.innerHTML = toggleHtml + groupedHtml;
+
+    container.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        completedGroupBy = btn.dataset.group;
+        renderCompleted();
+      });
+    });
 
     container.querySelectorAll('.completed-row').forEach(row => {
       row.addEventListener('click', () => openDrawer(row.dataset.orderId));

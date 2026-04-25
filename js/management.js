@@ -104,6 +104,7 @@
     btnNewOrder?.addEventListener('click', () => switchView('new-order'));
     btnAddProduct?.addEventListener('click', addProductItem);
     btnClearOrders?.addEventListener('click', handleClearCompletedOrders);
+    document.getElementById('btnClearStats')?.addEventListener('click', handleClearStats);
     orderForm?.addEventListener('submit', handleOrderSubmit);
 
     document.getElementById('btnCancelOrder')?.addEventListener('click', () => {
@@ -210,8 +211,8 @@
       return;
     }
 
-    const confirmedText = window.prompt(`目前有 ${completedCount} 筆已完成訂單，輸入「清除」後直接刪除。`, '');
-    if (confirmedText !== '清除') {
+    const confirmedText = window.prompt(`目前有 ${completedCount} 筆已完成訂單，輸入「確認清除」後直接刪除。`, '');
+    if (confirmedText !== '確認清除') {
       showToast('已取消清除');
       return;
     }
@@ -243,6 +244,7 @@
     });
 
     completedOrders.forEach(order => {
+      if (!window.utils.getRelevantWorkers(order).includes('yi')) return;
       if (window.utils.getWorkflowStatus(order, 'yi') !== 'completed') return;
       const completedDate = window.utils.getWorkerCompletionDate(order, 'yi');
       if (!completedDate || completedDate < prevMonthStart) return;
@@ -1183,6 +1185,17 @@
     localStorage.setItem('yiProductionStats', JSON.stringify(stats));
   }
 
+  function handleClearStats() {
+    const confirmedText = window.prompt('輸入「確認清除」以清空統計資料', '');
+    if (confirmedText !== '確認清除') {
+      showToast('已取消清除');
+      return;
+    }
+    localStorage.removeItem('yiProductionStats');
+    renderStats();
+    showToast('已清空統計資料');
+  }
+
   function renderStats() {
     const currentCategoryChart = document.getElementById('currentCategoryChart');
     const prevCategoryChart = document.getElementById('prevCategoryChart');
@@ -1204,6 +1217,7 @@
     const storedStats = getYiStatsFromStorage();
 
     const yiCompletedOrders = orders.filter(order => {
+      if (!window.utils.getRelevantWorkers(order).includes('yi')) return false;
       if (window.utils.getWorkflowStatus(order, 'yi') !== 'completed') return false;
       const completedDate = window.utils.getWorkerCompletionDate(order, 'yi');
       if (!completedDate) return false;

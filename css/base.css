@@ -138,12 +138,12 @@ img {
 }
 
 .btn-accent {
-  background: var(--color-accent);
-  color: #FFFFFF;
+  background: var(--color-success);
+  color: #fff;
 }
 
 .btn-accent:hover {
-  background: var(--color-accent-hover);
+  background: #3d6a4d;
   transform: translateY(-1px);
 }
 
