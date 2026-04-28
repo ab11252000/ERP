@@ -1103,6 +1103,122 @@ body {
     width: 100%;
     min-width: auto;
   }
+
+  /* 新增訂單頁面手機版優化 */
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+    padding: var(--space-md);
+  }
+
+  .header-left {
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header-right {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .search-box {
+    width: 100%;
+    min-width: unset;
+  }
+
+  #btnNewOrder {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* 新增訂單表單優化 */
+  .order-form {
+    max-width: 100%;
+  }
+
+  .form-section {
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+    border-radius: var(--radius-md);
+  }
+
+  .form-section-title {
+    font-size: 0.9375rem;
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+  }
+
+  .form-group {
+    margin-bottom: var(--space-sm);
+  }
+
+  .form-label {
+    font-size: 0.8125rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  .form-input,
+  .form-select {
+    padding: var(--space-md);
+    font-size: 16px; /* 防止 iOS 縮放 */
+  }
+
+  .form-textarea {
+    min-height: 100px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: var(--space-sm);
+    padding-top: var(--space-md);
+    position: sticky;
+    bottom: 0;
+    background: var(--color-bg);
+    margin: 0 calc(-1 * var(--space-md));
+    padding: var(--space-md);
+    border-top: 1px solid var(--color-border-light);
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: var(--space-md);
+  }
+
+  .btn-add-product {
+    padding: var(--space-lg);
+    font-size: 0.9375rem;
+  }
+
+  .product-item {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+  }
+
+  .product-item-header {
+    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+
+  .product-item-title {
+    font-size: 0.875rem;
+  }
+
+  .accessories-section.show {
+    max-height: 800px;
+  }
+
+  .accessories-buttons {
+    width: 100%;
+  }
+
+  .accessory-btn {
+    flex: 1;
+    text-align: center;
+    padding: var(--space-sm);
+    font-size: 0.8125rem;
+  }
 }
 
 /* Order Detail Modal */
