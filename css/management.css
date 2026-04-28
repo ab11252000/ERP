@@ -898,17 +898,17 @@ body {
   pointer-events: auto;
 }
 
-/* Responsive */
-@media (max-width: 1400px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* ========== RESPONSIVE ========== */
 
+/* Tablet landscape */
+@media (max-width: 1400px) {
+  .stats-grid,
   .workers-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
+/* Tablet */
 @media (max-width: 1024px) {
   .menu-toggle {
     display: flex;
@@ -949,49 +949,63 @@ body {
   }
 }
 
+/* Mobile */
 @media (max-width: 768px) {
+  /* Header 響應式 */
   .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
     padding: var(--space-md);
   }
 
   .header-left {
-    width: 100%;
-    flex-wrap: wrap;
+    display: flex;
+    align-items: center;
     gap: var(--space-sm);
   }
 
   .page-title {
     font-size: 1.25rem;
+    flex: 1;
   }
 
   .date-display {
-    width: 100%;
-    order: 3;
-  }
-
-  .header-right {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .search-box {
-    flex: 1;
-    min-width: 200px;
-    width: auto;
-  }
-
-  .btn-primary span {
     display: none;
   }
 
-  .btn-primary {
-    padding: var(--space-sm) var(--space-md);
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    width: 100%;
   }
 
+  .search-box {
+    width: 100%;
+    order: 2;
+  }
+
+  #btnNewOrder {
+    width: 100%;
+    justify-content: center;
+    order: 1;
+  }
+
+  #btnNewOrder span {
+    display: inline;
+  }
+
+  .btn-primary {
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  /* View 區塊 */
   .view {
     padding: var(--space-md);
   }
 
+  /* 統計卡片 */
   .stats-grid,
   .workers-grid {
     grid-template-columns: 1fr;
@@ -1003,39 +1017,129 @@ body {
     padding: var(--space-md);
   }
 
+  .worker-stats {
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  /* 表單區塊 - 新增訂單 */
+  .order-form {
+    max-width: 100%;
+  }
+
+  .form-section {
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
+
+  .form-section-title {
+    font-size: 1rem;
+    margin-bottom: var(--space-md);
+  }
+
   .form-grid {
     grid-template-columns: 1fr;
+    gap: var(--space-md);
   }
 
   .form-grid .span-2 {
     grid-column: span 1;
   }
 
-  .form-section {
+  .form-input,
+  .form-select {
+    padding: var(--space-md);
+    font-size: 16px;
+  }
+
+  .form-textarea {
+    min-height: 100px;
+  }
+
+  /* 產品項目 */
+  .product-item {
     padding: var(--space-md);
   }
 
-  .yi-stats-grid,
-  .yi-stats-detail {
+  .product-item .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .yi-stats-header {
+  .product-item .product-main-row {
     flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .product-item .product-main-row .form-group {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .btn-add-product {
+    padding: var(--space-lg);
+  }
+
+  /* 表單按鈕 - 固定底部 */
+  .form-actions {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    flex-direction: column-reverse;
+    gap: var(--space-sm);
+    background: var(--color-bg);
+    padding: var(--space-md);
+    margin: var(--space-lg) calc(-1 * var(--space-md)) 0;
+    border-top: 1px solid var(--color-border-light);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    padding: var(--space-md);
+    justify-content: center;
+  }
+
+  /* 配件區 */
+  .accessories-add {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .accessories-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .accessory-btn {
     text-align: center;
+    padding: var(--space-sm);
   }
 
-  .yi-stat-value {
-    font-size: 3rem;
+  .accessory-item {
+    flex-wrap: wrap;
   }
 
+  .accessory-item input {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .accessories-section.show {
+    max-height: 1000px;
+  }
+
+  /* 訂單表格 */
   .orders-table-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    margin: 0 calc(-1 * var(--space-md));
+    padding: 0 var(--space-md);
   }
 
   .orders-table {
-    min-width: 700px;
+    min-width: 600px;
   }
 
   .orders-table th,
@@ -1044,6 +1148,19 @@ body {
     font-size: 0.8125rem;
   }
 
+  /* Filter tabs */
+  .filter-tabs {
+    width: 100%;
+  }
+
+  .filter-tab {
+    flex: 1;
+    text-align: center;
+    padding: var(--space-sm);
+    font-size: 0.8125rem;
+  }
+
+  /* Modal */
   .modal {
     width: 95%;
     max-height: 90vh;
@@ -1059,165 +1176,43 @@ body {
     gap: var(--space-md);
   }
 
-  .accessories-add {
+  /* 統計頁 */
+  .yi-stats-grid,
+  .yi-stats-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .yi-stats-header {
     flex-direction: column;
-    align-items: flex-start;
+    text-align: center;
+    gap: var(--space-md);
   }
 
-  .accessories-buttons {
-    flex-wrap: wrap;
-  }
-
-  .accessory-item {
-    flex-wrap: wrap;
-  }
-
-  .accessory-item input {
-    flex: 1;
-    min-width: 80px;
+  .yi-stat-value {
+    font-size: 3rem;
   }
 }
 
-@media (max-width: 480px) {
-  .filter-tabs {
-    width: 100%;
-  }
-
-  .filter-tab {
-    flex: 1;
-    text-align: center;
-    padding: var(--space-sm) var(--space-md);
-    font-size: 0.8125rem;
-  }
-
-  .worker-stats {
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-
-  .product-item .product-main-row {
-    flex-direction: column;
-  }
-
-  .product-item .product-main-row .form-group {
-    width: 100%;
-    min-width: auto;
-  }
-
-  /* 新增訂單頁面手機版優化 */
+/* Small mobile */
+@media (max-width: 400px) {
   .header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-md);
-    padding: var(--space-md);
+    padding: var(--space-sm);
   }
 
-  .header-left {
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .header-right {
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .search-box {
-    width: 100%;
-    min-width: unset;
-  }
-
-  #btnNewOrder {
-    width: 100%;
-    justify-content: center;
-  }
-
-  /* 新增訂單表單優化 */
-  .order-form {
-    max-width: 100%;
+  .view {
+    padding: var(--space-sm);
   }
 
   .form-section {
-    padding: var(--space-md);
-    margin-bottom: var(--space-md);
-    border-radius: var(--radius-md);
-  }
-
-  .form-section-title {
-    font-size: 0.9375rem;
-    margin-bottom: var(--space-md);
-    padding-bottom: var(--space-sm);
-  }
-
-  .form-group {
-    margin-bottom: var(--space-sm);
-  }
-
-  .form-label {
-    font-size: 0.8125rem;
-    margin-bottom: var(--space-xs);
-  }
-
-  .form-input,
-  .form-select {
-    padding: var(--space-md);
-    font-size: 16px; /* 防止 iOS 縮放 */
-  }
-
-  .form-textarea {
-    min-height: 100px;
-  }
-
-  .form-actions {
-    flex-direction: column-reverse;
-    gap: var(--space-sm);
-    padding-top: var(--space-md);
-    position: sticky;
-    bottom: 0;
-    background: var(--color-bg);
-    margin: 0 calc(-1 * var(--space-md));
-    padding: var(--space-md);
-    border-top: 1px solid var(--color-border-light);
-  }
-
-  .form-actions .btn {
-    width: 100%;
-    justify-content: center;
-    padding: var(--space-md);
-  }
-
-  .btn-add-product {
-    padding: var(--space-lg);
-    font-size: 0.9375rem;
+    padding: var(--space-sm);
   }
 
   .product-item {
-    padding: var(--space-md);
-    border-radius: var(--radius-md);
-  }
-
-  .product-item-header {
-    padding-bottom: var(--space-sm);
-    margin-bottom: var(--space-sm);
-  }
-
-  .product-item-title {
-    font-size: 0.875rem;
-  }
-
-  .accessories-section.show {
-    max-height: 800px;
+    padding: var(--space-sm);
   }
 
   .accessories-buttons {
-    width: 100%;
-  }
-
-  .accessory-btn {
-    flex: 1;
-    text-align: center;
-    padding: var(--space-sm);
-    font-size: 0.8125rem;
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1498,20 +1493,4 @@ body {
 .product-item .product-main-row .form-group {
   flex: 0 0 auto;
   min-width: 150px;
-}
-
-@media (max-width: 768px) {
-  .product-item .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .product-item .form-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  .product-item .form-grid {
-    grid-template-columns: 1fr;
-  }
 }
