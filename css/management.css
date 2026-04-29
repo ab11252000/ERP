@@ -112,9 +112,6 @@ body {
   padding: var(--space-lg) var(--space-xl);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border-light);
-  position: sticky;
-  top: 0;
-  z-index: 40;
 }
 
 .header-left {
@@ -951,23 +948,58 @@ body {
 
 /* Mobile */
 @media (max-width: 768px) {
-  /* Header 響應式 */
+  /* 全域約束 - 防止任何元素超出螢幕 */
+  * {
+    max-width: 100vw;
+  }
+
+  .main-content {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .view {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 12px;
+  }
+
+  .btn {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Header 響應式 - 手機版 */
   .header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-md);
-    padding: var(--space-md);
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 12px;
+    padding: 12px 16px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--color-surface);
   }
 
   .header-left {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .menu-toggle {
+    flex-shrink: 0;
   }
 
   .page-title {
-    font-size: 1.25rem;
-    flex: 1;
+    font-size: 1.125rem;
+    margin: 0;
   }
 
   .date-display {
@@ -977,32 +1009,49 @@ body {
   .header-right {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 8px;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .search-box {
-    width: 100%;
-    order: 2;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
-  #btnNewOrder {
+  .search-input {
     width: 100%;
+    min-width: 0;
+    flex: 1;
+  }
+
+  #btnNewOrder,
+  .header-right .btn-primary,
+  .header-right .btn {
+    display: flex !important;
+    width: 100% !important;
+    max-width: 100% !important;
     justify-content: center;
-    order: 1;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    box-sizing: border-box;
   }
 
-  #btnNewOrder span {
-    display: inline;
+  /* 表單提交按鈕 */
+  .btn-accent,
+  .btn-lg,
+  .form-actions .btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
   }
 
-  .btn-primary {
-    padding: var(--space-md) var(--space-lg);
-  }
-
-  /* View 區塊 */
-  .view {
-    padding: var(--space-md);
+  .btn-primary span {
+    display: inline !important;
   }
 
   /* 統計卡片 */
@@ -1024,12 +1073,21 @@ body {
 
   /* 表單區塊 - 新增訂單 */
   .order-form {
+    width: 100%;
     max-width: 100%;
+    box-sizing: border-box;
   }
 
   .form-section {
     padding: var(--space-md);
     margin-bottom: var(--space-md);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .form-group {
+    width: 100%;
+    min-width: 0;
   }
 
   .form-section-title {
@@ -1048,12 +1106,16 @@ body {
 
   .form-input,
   .form-select {
+    width: 100%;
     padding: var(--space-md);
     font-size: 16px;
+    box-sizing: border-box;
   }
 
   .form-textarea {
+    width: 100%;
     min-height: 100px;
+    box-sizing: border-box;
   }
 
   /* 產品項目 */
@@ -1079,19 +1141,12 @@ body {
     padding: var(--space-lg);
   }
 
-  /* 表單按鈕 - 固定底部 */
+  /* 表單按鈕 */
   .form-actions {
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
     flex-direction: column-reverse;
     gap: var(--space-sm);
-    background: var(--color-bg);
     padding: var(--space-md);
-    margin: var(--space-lg) calc(-1 * var(--space-md)) 0;
-    border-top: 1px solid var(--color-border-light);
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+    margin-top: var(--space-lg);
   }
 
   .form-actions .btn {
@@ -1130,16 +1185,98 @@ body {
     max-height: 1000px;
   }
 
-  /* 訂單表格 */
+  .accessories-section .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* 訂單表格 - 手機版改為卡片式 */
   .orders-table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin: 0 calc(-1 * var(--space-md));
-    padding: 0 var(--space-md);
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
   }
 
   .orders-table {
-    min-width: 600px;
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .orders-table thead {
+    display: none;
+  }
+
+  .orders-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .orders-table tbody tr {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: 12px;
+    padding: 16px;
+    gap: 8px;
+  }
+
+  .orders-table tbody tr:hover {
+    background: var(--color-surface);
+  }
+
+  .orders-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border: none;
+    font-size: 0.875rem;
+  }
+
+  .orders-table td::before {
+    content: attr(data-label);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+
+  /* 第一欄：訂單編號 - 顯示為標題 */
+  .orders-table td:first-child {
+    font-weight: 600;
+    font-size: 1rem;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .orders-table td:first-child::before {
+    display: none;
+  }
+
+  .orders-table td:first-child .order-id {
+    font-size: 1rem;
+  }
+
+  /* 最後一欄：操作按鈕 */
+  .orders-table td:last-child {
+    padding-top: 8px;
+    margin-top: 4px;
+    border-top: 1px solid var(--color-border-light);
+  }
+
+  .orders-table td:last-child::before {
+    display: none;
+  }
+
+  .orders-table td:last-child .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .orders-table th,

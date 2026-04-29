@@ -373,9 +373,9 @@
           <div class="form-group">
             <label class="form-label">主體皮色 *</label>
             <select class="form-select product-main-color" data-index="${index}">
-              <option value="黑色">黑色</option>
+              <option value="黑色" selected>黑色</option>
               <option value="咖啡">咖啡</option>
-              <option value="米白" selected>米白</option>
+              <option value="米白">米白</option>
               <option value="其他">其他</option>
             </select>
           </div>
@@ -511,9 +511,9 @@
               <div class="form-group">
                 <label class="form-label">皮色</label>
                 <select class="form-select accessory-color" data-index="${index}">
-                  <option value="黑色">黑色</option>
+                  <option value="黑色" selected>黑色</option>
                   <option value="咖啡">咖啡</option>
-                  <option value="米白" selected>米白</option>
+                  <option value="米白">米白</option>
                   <option value="其他">其他</option>
                 </select>
               </div>
@@ -1033,13 +1033,13 @@
 
     tbody.innerHTML = recent.map(order => `
       <tr>
-        <td><span class="order-id">${escapeHtml(order.orderId)}</span></td>
-        <td>${escapeHtml(order.customerName)}</td>
-        <td>${escapeHtml(getCategoryLabel(order.product.category))}</td>
-        <td>${escapeHtml(window.utils.getMainSpecLabel(order))}</td>
-        <td class="order-deadline">${escapeHtml(window.utils.formatDate(order.dates.deadline))}</td>
-        <td><span class="badge ${window.utils.getStageBadgeClass(order.status.stage)}">${escapeHtml(getStageLabel(order.status.stage))}</span></td>
-        <td>${escapeHtml(renderProgressText(order))}</td>
+        <td data-label="訂單編號"><span class="order-id">${escapeHtml(order.orderId)}</span></td>
+        <td data-label="客戶">${escapeHtml(order.customerName)}</td>
+        <td data-label="品項">${escapeHtml(getCategoryLabel(order.product.category))}</td>
+        <td data-label="規格">${escapeHtml(window.utils.getMainSpecLabel(order))}</td>
+        <td data-label="交期" class="order-deadline">${escapeHtml(window.utils.formatDate(order.dates.deadline))}</td>
+        <td data-label="狀態"><span class="badge ${window.utils.getStageBadgeClass(order.status.stage)}">${escapeHtml(getStageLabel(order.status.stage))}</span></td>
+        <td data-label="進度">${escapeHtml(renderProgressText(order))}</td>
       </tr>
     `).join('');
   }
@@ -1068,14 +1068,14 @@
 
     tbody.innerHTML = filtered.map(order => `
       <tr data-order-id="${escapeHtml(order.orderId)}">
-        <td><span class="order-id">${escapeHtml(order.orderId)}</span></td>
-        <td>${escapeHtml(order.customerName)}</td>
-        <td>${escapeHtml(getCategoryLabel(order.product.category))}</td>
-        <td>${escapeHtml(window.utils.getMainSpecLabel(order))} / ${window.utils.orderQuantity(order)}</td>
-        <td>${escapeHtml(order.product.mainColor || '-')}</td>
-        <td>${escapeHtml(window.utils.formatDate(order.dates.deadline))}</td>
-        <td><span class="badge ${window.utils.getStageBadgeClass(order.status.stage)}">${escapeHtml(getStageLabel(order.status.stage))}</span></td>
-        <td><button class="btn btn-sm btn-secondary" onclick="window.viewOrder('${escapeJs(order.orderId)}')">查看</button></td>
+        <td data-label="訂單編號"><span class="order-id">${escapeHtml(order.orderId)}</span></td>
+        <td data-label="客戶">${escapeHtml(order.customerName)}</td>
+        <td data-label="品項">${escapeHtml(getCategoryLabel(order.product.category))}</td>
+        <td data-label="規格/數量">${escapeHtml(window.utils.getMainSpecLabel(order))} / ${window.utils.orderQuantity(order)}</td>
+        <td data-label="皮色">${escapeHtml(order.product.mainColor || '-')}</td>
+        <td data-label="交期">${escapeHtml(window.utils.formatDate(order.dates.deadline))}</td>
+        <td data-label="狀態"><span class="badge ${window.utils.getStageBadgeClass(order.status.stage)}">${escapeHtml(getStageLabel(order.status.stage))}</span></td>
+        <td data-label="操作"><button class="btn btn-sm btn-secondary" onclick="window.viewOrder('${escapeJs(order.orderId)}')">查看</button></td>
       </tr>
     `).join('');
   }

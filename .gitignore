@@ -4,3 +4,9 @@ firebase.json
 firestore.rules
 node_modules/
 dist-desktop/
+
+# Capacitor / App
+android/
+ios/
+www/
+capacitor.config.ts
