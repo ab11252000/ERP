@@ -345,9 +345,9 @@ body {
 
 .order-specs {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-sm);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   margin-bottom: var(--space-md);
 }
 
@@ -355,16 +355,28 @@ body {
   align-items: center;
 }
 
+.spec-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .spec-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
   background: var(--color-bg-alt);
   color: var(--color-text-secondary);
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .spec-tag.primary {
   background: transparent;
   padding: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
   color: var(--color-text);
 }
 
@@ -372,20 +384,16 @@ body {
   line-height: 1.45;
 }
 
-.spec-tag.quantity {
-  background: #E5E0D5;
-  color: var(--color-text);
-  font-size: 0.875rem;
-  font-weight: 700;
-  padding: 4px 10px;
-}
-
+.spec-tag.quantity,
 .spec-tag.color {
-  background: #DDD8CC;
-  color: var(--color-text);
+  min-width: 88px;
+  justify-content: center;
+  border: 1px solid #D8B04B;
+  background: #FFF1BF;
+  color: #5E4300;
   font-size: 0.875rem;
-  font-weight: 700;
-  padding: 4px 10px;
+  font-weight: 800;
+  padding: 5px 9px;
 }
 
 .workflow-actions,
@@ -461,6 +469,18 @@ body {
 .material-ready-pill {
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+.material-ready-pill.unprocessed {
+  background: #B54A4A;
+  border: 1px solid #B54A4A;
+  color: #fff;
+}
+
+.material-ready-pill.completed {
+  background: #4A7C59;
+  border: 1px solid #4A7C59;
+  color: #fff;
 }
 
 .accessory-list {

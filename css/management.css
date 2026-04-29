@@ -1617,8 +1617,12 @@ body {
 
 /* Compact form grid within product items */
 .product-item .form-grid {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   align-items: end;
+}
+
+.product-item .form-grid > .form-group {
+  min-width: 0;
 }
 
 .product-item .product-main-row {

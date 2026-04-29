@@ -285,6 +285,10 @@ window.firebaseConfig = firebaseConfig;
         return true;
       }
 
+      if (category === 'spa-bed' && (workerId === 'yi' || workerId === 'you')) {
+        return true;
+      }
+
       if (this.requiresYanMaterial(order)) {
         return this.getWorkflowStatus(order, 'yan') === 'completed';
       }

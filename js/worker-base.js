@@ -777,15 +777,17 @@
     }
 
     const isAccessoryOnly = order.product.category === 'accessory-only';
-    const categoryTag = isAccessoryOnly ? '' : `<span class="spec-tag primary">${window.utils.getCategoryLabel(order.product.category)}</span>`;
+    const categoryLabel = isAccessoryOnly ? '' : window.utils.getCategoryLabel(order.product.category);
+    const mainSpec = [categoryLabel, window.utils.getMainSpecLabel(order)].filter(Boolean).join(' ');
 
     return `
       <div class="order-specs">
-        ${categoryTag}
-        <span class="spec-tag primary">${window.utils.getMainSpecLabel(order)}</span>
-        <span class="spec-tag quantity">數量: ${window.utils.orderQuantity(order)}</span>
-        ${order.product.mainColor ? `<span class="spec-tag color">皮色: ${order.product.mainColor}</span>` : ''}
-        ${order.product.model ? `<span class="spec-tag">${order.product.model}型</span>` : ''}
+        <span class="spec-tag primary">${mainSpec}</span>
+        <div class="spec-meta-row">
+          <span class="spec-tag quantity">數量: ${window.utils.orderQuantity(order)}</span>
+          ${order.product.mainColor ? `<span class="spec-tag color">皮色: ${order.product.mainColor}</span>` : ''}
+          ${order.product.model ? `<span class="spec-tag">${order.product.model}型</span>` : ''}
+        </div>
       </div>
     `;
   }
@@ -841,8 +843,9 @@
 
   function renderOrderHighlights(order, workerId) {
     const isChairType = order.product.category === 'massage-chair' || order.product.category === 'repair-chair';
+    const showsLeatherReadiness = isChairType || order.product.category === 'spa-bed';
 
-    if (workerId === 'yi' && isChairType) {
+    if (workerId === 'yi' && showsLeatherReadiness) {
       const leatherReady = window.utils.getWorkflowStatus(order, 'yan') === 'completed';
       const leatherStatusClass = leatherReady ? 'completed' : 'unprocessed';
       const leatherStatusLabel = leatherReady ? '皮:已完成' : '皮:未完成';
