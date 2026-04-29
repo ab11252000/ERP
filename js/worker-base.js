@@ -20,6 +20,56 @@
     setTimeout(() => toast.remove(), 2200);
   }
 
+  function openTextInputDialog({ title, label, placeholder = '', defaultValue = '', submitText = '完成', onSubmit }) {
+    const overlay = document.createElement('div');
+    overlay.className = 'input-dialog-overlay';
+
+    const dialog = document.createElement('form');
+    dialog.className = 'input-dialog';
+    dialog.innerHTML = `
+      <div class="input-dialog-header">
+        <h3>${title}</h3>
+      </div>
+      <label class="input-dialog-field">
+        <span>${label}</span>
+        <input type="text" class="input-dialog-input" maxlength="20" placeholder="${placeholder}" autocomplete="off">
+      </label>
+      <div class="input-dialog-actions">
+        <button type="button" class="input-dialog-btn input-dialog-cancel">取消</button>
+        <button type="submit" class="input-dialog-btn input-dialog-submit">${submitText}</button>
+      </div>
+    `;
+
+    const input = dialog.querySelector('.input-dialog-input');
+    const close = () => overlay.remove();
+
+    input.value = defaultValue;
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => input.focus());
+    input.select();
+
+    overlay.addEventListener('click', event => {
+      if (event.target === overlay) close();
+    });
+
+    dialog.querySelector('.input-dialog-cancel')?.addEventListener('click', close);
+    dialog.addEventListener('submit', event => {
+      event.preventDefault();
+      const value = input.value.trim();
+      if (!value) {
+        input.focus();
+        return;
+      }
+      onSubmit(value);
+      close();
+    });
+
+    dialog.addEventListener('keydown', event => {
+      if (event.key === 'Escape') close();
+    });
+  }
+
   let config = null;
   let currentTab = 'unprocessed';
   let currentScope = 'all';
@@ -617,11 +667,15 @@
 
     container.querySelectorAll('.add-group-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const name = prompt('請輸入分類名稱：');
-        if (name && name.trim()) {
-          addCustomGroup(groupStatus, name.trim());
-          renderEverything();
-        }
+        openTextInputDialog({
+          title: '新增分類',
+          label: '分類名稱',
+          submitText: '新增',
+          onSubmit(name) {
+            addCustomGroup(groupStatus, name);
+            renderEverything();
+          }
+        });
       });
     });
 
@@ -630,11 +684,16 @@
         const groupId = el.dataset.groupId;
         const group = getGroupsForStatus(groupStatus).find(g => g.id === groupId);
         if (!group) return;
-        const newName = prompt('請輸入新名稱：', group.name);
-        if (newName && newName.trim()) {
-          renameCustomGroup(groupStatus, groupId, newName.trim());
-          renderEverything();
-        }
+        openTextInputDialog({
+          title: '重新命名分類',
+          label: '分類名稱',
+          defaultValue: group.name,
+          submitText: '儲存',
+          onSubmit(newName) {
+            renameCustomGroup(groupStatus, groupId, newName);
+            renderEverything();
+          }
+        });
       });
     });
 

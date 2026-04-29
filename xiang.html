@@ -11,8 +11,34 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/worker.css">
   <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/splash.css">
 </head>
 <body data-worker="xiang">
+  <div id="splashScreen">
+    <div class="bg-layer"></div>
+    <div class="splash-content">
+      <div class="logo-area">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="glow"></div>
+        <div class="main-char">翔</div>
+      </div>
+      <div class="company-name">翔躍企業社</div>
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-dot"></div>
+        <div class="divider-line"></div>
+      </div>
+      <div class="subtitle">後台系統</div>
+      <div class="loader-container">
+        <div class="loader-bar">
+          <div class="loader-progress"></div>
+        </div>
+        <div class="loader-text">載入中<span class="loader-dots"><span>.</span><span>.</span><span>.</span></span></div>
+      </div>
+    </div>
+  </div>
+
   <div class="login-overlay active" id="loginOverlay">
     <div class="login-title">請輸入密碼</div>
     <div class="pin-box">
@@ -80,6 +106,7 @@
   </div>
 
   <script src="js/firebase-config.js"></script>
+  <script src="js/splash.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/cloud-status.js"></script>
   <script src="js/worker-base.js"></script>
