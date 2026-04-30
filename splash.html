@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>祥耀企業社</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0a;
+      overflow: hidden;
+      font-family: 'Noto Serif TC', serif;
+    }
+
+    /* 背景層次 */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(184, 134, 56, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 50% 120%, rgba(184, 134, 56, 0.1) 0%, transparent 50%),
+        linear-gradient(180deg, #0a0a0a 0%, #1a1a18 50%, #0a0a0a 100%);
+    }
+
+    /* 微粒效果 */
+    .particles {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(184, 134, 56, 0.6);
+      border-radius: 50%;
+      animation: float 8s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* 主容器 */
+    .splash-container {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      animation: containerFadeIn 0.8s ease-out forwards;
+      opacity: 0;
+    }
+
+    @keyframes containerFadeIn {
+      to { opacity: 1; }
+    }
+
+    /* Logo 區域 */
+    .logo-area {
+      position: relative;
+      margin-bottom: 40px;
+    }
+
+    /* 裝飾圓環 */
+    .ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180px;
+      height: 180px;
+      border: 1px solid rgba(184, 134, 56, 0.3);
+      border-radius: 50%;
+      animation: ringPulse 3s infinite ease-in-out;
+    }
+
+    .ring:nth-child(2) {
+      width: 220px;
+      height: 220px;
+      animation-delay: 0.5s;
+      border-color: rgba(184, 134, 56, 0.15);
+    }
+
+    @keyframes ringPulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+      50% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+    }
+
+    /* 主字 "祥" */
+    .main-char {
+      position: relative;
+      font-size: 120px;
+      font-weight: 900;
+      color: transparent;
+      background: linear-gradient(135deg, #d4a94c 0%, #f5d98a 30%, #b8862e 70%, #d4a94c 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      filter: drop-shadow(0 0 30px rgba(184, 134, 56, 0.4));
+      animation: charReveal 1.2s ease-out 0.3s forwards;
+      opacity: 0;
+      transform: scale(0.8);
+    }
+
+    @keyframes charReveal {
+      0% { opacity: 0; transform: scale(0.8); }
+      60% { opacity: 1; transform: scale(1.05); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* 光暈效果 */
+    .glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(184, 134, 56, 0.4) 0%, transparent 70%);
+      animation: glowPulse 2s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    }
+
+    /* 公司名稱 */
+    .company-name {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 16px;
+      color: #e8d5b0;
+      text-shadow: 0 2px 20px rgba(184, 134, 56, 0.3);
+      animation: nameSlideUp 0.8s ease-out 0.8s forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    @keyframes nameSlideUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 裝飾線 */
+    .divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 24px 0;
+      animation: dividerFadeIn 0.6s ease-out 1.2s forwards;
+      opacity: 0;
+    }
+
+    @keyframes dividerFadeIn {
+      to { opacity: 1; }
+    }
+
+    .divider-line {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #b8862e, transparent);
+    }
+
+    .divider-dot {
+      width: 6px;
+      height: 6px;
+      background: #b8862e;
+      transform: rotate(45deg);
+    }
+
+    /* 副標 */
+    .subtitle {
+      font-size: 14px;
+      letter-spacing: 8px;
+      color: rgba(184, 134, 56, 0.7);
+      font-weight: 400;
+      animation: subtitleFadeIn 0.6s ease-out 1.4s forwards;
+      opacity: 0;
+    }
+
+    @keyframes subtitleFadeIn {
+      to { opacity: 1; }
+    }
+
+    /* 載入指示 */
+    .loader {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      animation: loaderFadeIn 0.5s ease-out 1.8s forwards;
+      opacity: 0;
+    }
+
+    @keyframes loaderFadeIn {
+      to { opacity: 1; }
+    }
+
+    .loader-dot {
+      width: 8px;
+      height: 8px;
+      background: #b8862e;
+      border-radius: 50%;
+      animation: loaderBounce 1.4s infinite ease-in-out;
+    }
+
+    .loader-dot:nth-child(2) { animation-delay: 0.16s; }
+    .loader-dot:nth-child(3) { animation-delay: 0.32s; }
+
+    @keyframes loaderBounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* 淡出動畫 */
+    .fade-out {
+      animation: fadeOut 0.5s ease-in forwards;
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; transform: scale(1.1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-layer"></div>
+
+  <div class="particles" id="particles"></div>
+
+  <div class="splash-container" id="splashContainer">
+    <div class="logo-area">
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="glow"></div>
+      <div class="main-char">翔</div>
+    </div>
+
+    <div class="company-name">翔躍企業社</div>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-dot"></div>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="subtitle">後台系統</div>
+  </div>
+
+  <div class="loader">
+    <div class="loader-dot"></div>
+    <div class="loader-dot"></div>
+    <div class="loader-dot"></div>
+  </div>
+
+  <script>
+    // 生成浮動微粒
+    const particles = document.getElementById('particles');
+    for (let i = 0; i < 20; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 8 + 's';
+      particle.style.animationDuration = (6 + Math.random() * 4) + 's';
+      particles.appendChild(particle);
+    }
+
+    // 模擬載入完成後淡出（實際使用時可改為監聽 load 事件）
+    setTimeout(() => {
+      document.getElementById('splashContainer').classList.add('fade-out');
+      document.querySelector('.loader').classList.add('fade-out');
+      // 淡出後跳轉主頁面
+      // setTimeout(() => { window.location.href = 'work_orders.html'; }, 500);
+    }, 3500);
+  </script>
+</body>
+</html>

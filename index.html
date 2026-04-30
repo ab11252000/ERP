@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#242424" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:,">
+  <title>翔躍工廠 ERP</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/management.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <style>
+    /* Splash Screen */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap');
+
+    #splashScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0a;
+      font-family: 'Noto Serif TC', serif;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #splashScreen.hide {
+      opacity: 0;
+      visibility: hidden;
+    }
+    #splashScreen .bg-layer {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(184, 134, 56, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 50% 120%, rgba(184, 134, 56, 0.1) 0%, transparent 50%),
+        linear-gradient(180deg, #0a0a0a 0%, #1a1a18 50%, #0a0a0a 100%);
+    }
+    #splashScreen .splash-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      animation: splashFadeIn 0.8s ease-out forwards;
+      opacity: 0;
+    }
+    @keyframes splashFadeIn { to { opacity: 1; } }
+    #splashScreen .logo-area {
+      position: relative;
+      margin-bottom: 32px;
+    }
+    #splashScreen .ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px; height: 140px;
+      border: 1px solid rgba(184, 134, 56, 0.3);
+      border-radius: 50%;
+      animation: ringPulse 3s infinite ease-in-out;
+    }
+    #splashScreen .ring:nth-child(2) {
+      width: 180px; height: 180px;
+      animation-delay: 0.5s;
+      border-color: rgba(184, 134, 56, 0.15);
+    }
+    @keyframes ringPulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+      50% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+    }
+    #splashScreen .glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px; height: 120px;
+      background: radial-gradient(circle, rgba(184, 134, 56, 0.4) 0%, transparent 70%);
+      animation: glowPulse 2s infinite ease-in-out;
+    }
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    }
+    #splashScreen .main-char {
+      position: relative;
+      font-size: 80px;
+      font-weight: 900;
+      color: transparent;
+      background: linear-gradient(135deg, #d4a94c 0%, #f5d98a 30%, #b8862e 70%, #d4a94c 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      filter: drop-shadow(0 0 20px rgba(184, 134, 56, 0.4));
+      animation: charReveal 1s ease-out 0.3s forwards;
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    @keyframes charReveal {
+      0% { opacity: 0; transform: scale(0.8); }
+      60% { opacity: 1; transform: scale(1.05); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    #splashScreen .company-name {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 12px;
+      color: #e8d5b0;
+      text-shadow: 0 2px 20px rgba(184, 134, 56, 0.3);
+      animation: nameSlideUp 0.8s ease-out 0.8s forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    @keyframes nameSlideUp { to { opacity: 1; transform: translateY(0); } }
+    #splashScreen .divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 20px 0;
+      animation: dividerFadeIn 0.6s ease-out 1.2s forwards;
+      opacity: 0;
+    }
+    @keyframes dividerFadeIn { to { opacity: 1; } }
+    #splashScreen .divider-line {
+      width: 50px; height: 1px;
+      background: linear-gradient(90deg, transparent, #b8862e, transparent);
+    }
+    #splashScreen .divider-dot {
+      width: 5px; height: 5px;
+      background: #b8862e;
+      transform: rotate(45deg);
+    }
+    #splashScreen .subtitle {
+      font-size: 12px;
+      letter-spacing: 6px;
+      color: rgba(184, 134, 56, 0.7);
+      animation: subtitleFadeIn 0.6s ease-out 1.4s forwards;
+      opacity: 0;
+    }
+    @keyframes subtitleFadeIn { to { opacity: 1; } }
+
+    /* Loading indicator */
+    #splashScreen .loader-container {
+      margin-top: 40px;
+      animation: loaderFadeIn 0.5s ease-out 1.6s forwards;
+      opacity: 0;
+    }
+    @keyframes loaderFadeIn { to { opacity: 1; } }
+
+    #splashScreen .loader-bar {
+      width: 180px;
+      height: 2px;
+      background: rgba(184, 134, 56, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+    #splashScreen .loader-progress {
+      position: absolute;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #b8862e, #f5d98a, #b8862e);
+      background-size: 200% 100%;
+      border-radius: 2px;
+      animation: loadProgress 2s ease-in-out 1.6s forwards, shimmer 1.5s infinite linear;
+    }
+    @keyframes loadProgress {
+      0% { width: 0%; }
+      20% { width: 25%; }
+      50% { width: 60%; }
+      80% { width: 85%; }
+      100% { width: 100%; }
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    #splashScreen .loader-text {
+      margin-top: 12px;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: rgba(184, 134, 56, 0.5);
+    }
+    #splashScreen .loader-dots {
+      display: inline-block;
+    }
+    #splashScreen .loader-dots span {
+      animation: dotBlink 1.4s infinite;
+      opacity: 0;
+    }
+    #splashScreen .loader-dots span:nth-child(1) { animation-delay: 0s; }
+    #splashScreen .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+    #splashScreen .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotBlink {
+      0%, 20% { opacity: 0; }
+      40% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body class="management-page">
+  <!-- Splash Screen -->
+  <div id="splashScreen">
+    <div class="bg-layer"></div>
+    <div class="splash-content">
+      <div class="logo-area">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="glow"></div>
+        <div class="main-char">翔</div>
+      </div>
+      <div class="company-name">翔躍企業社</div>
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-dot"></div>
+        <div class="divider-line"></div>
+      </div>
+      <div class="subtitle">後台系統</div>
+      <div class="loader-container">
+        <div class="loader-bar">
+          <div class="loader-progress"></div>
+        </div>
+        <div class="loader-text">載入中<span class="loader-dots"><span>.</span><span>.</span><span>.</span></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="login-overlay active" id="loginOverlay">
+    <div class="login-title">請輸入密碼</div>
+    <div class="pin-box">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+      <input type="tel" class="pin-input" maxlength="1" inputmode="numeric">
+    </div>
+    <button class="login-btn" id="loginBtn">登入</button>
+  </div>
+
+  <div id="appContent">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1 class="logo">翔躍</h1>
+      <span class="logo-sub">訂單管理系統</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-view="dashboard">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+        </svg>
+        <span>總覽</span>
+      </a>
+      <a href="#" class="nav-item" data-view="orders">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+          <rect x="9" y="3" width="6" height="4" rx="1"></rect>
+          <path d="M9 12h6m-6 4h6"></path>
+        </svg>
+        <span>訂單管理</span>
+      </a>
+      <a href="#" class="nav-item" data-view="new-order">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 8v8m-4-4h8"></path>
+        </svg>
+        <span>新增訂單</span>
+      </a>
+      <a href="#" class="nav-item" data-view="delivery">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="3" width="15" height="13" rx="2"></rect>
+          <path d="M16 8h4l3 3v5h-7V8z"></path>
+          <circle cx="5.5" cy="18.5" r="2.5"></circle>
+          <circle cx="18.5" cy="18.5" r="2.5"></circle>
+        </svg>
+        <span>配送規劃</span>
+      </a>
+      <a href="#" class="nav-item" data-view="stats">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 20V10m-6 10V4M6 20v-6"></path>
+        </svg>
+        <span>產量統計</span>
+      </a>
+      <a href="#" class="nav-item" data-view="testing">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 3h6"></path>
+          <path d="M10 9h4"></path>
+          <path d="M8 3v2l-3 5a5 5 0 0 0 4.3 7.5h5.4A5 5 0 0 0 19 10l-3-5V3"></path>
+        </svg>
+        <span>測試</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="yan.html" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="5" y="2" width="14" height="20" rx="2"></rect>
+          <path d="M12 18h.01"></path>
+        </svg>
+        <span>現場端</span>
+      </a>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <main class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-toggle" id="menuToggle" aria-label="選單">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18"></path>
+          </svg>
+        </button>
+        <h2 class="page-title" id="pageTitle">總覽</h2>
+        <span class="date-display" id="dateDisplay"></span>
+      </div>
+      <div class="header-right">
+        <div class="search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="M21 21l-4.35-4.35"></path>
+          </svg>
+          <input type="text" placeholder="搜尋訂單編號、客戶..." class="search-input" id="searchInput">
+        </div>
+        <button class="btn btn-primary" id="btnNewOrder">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14m-7-7h14"></path>
+          </svg>
+          <span>新增訂單</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="view active" id="dashboardView">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-value" id="statInProgress">--</span>
+            <span class="stat-label">進行中</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-value urgent" id="statUrgent">--</span>
+            <span class="stat-label">即將交期</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-value" id="statReady">--</span>
+            <span class="stat-label">待出貨</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-value" id="statCompleted">--</span>
+            <span class="stat-label">本月完成</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h3>現場進度</h3>
+      </div>
+      <div class="workers-grid">
+        <div class="worker-card" data-worker="yan">
+          <div class="worker-avatar">言</div>
+          <div class="worker-info">
+            <div class="worker-stats">
+              <span class="worker-stat"><strong id="yanUnprocessed">--</strong> 未處理</span>
+              <span class="worker-stat"><strong id="yanPending">--</strong> 待處理</span>
+            </div>
+          </div>
+          <div class="worker-status online"></div>
+        </div>
+        <div class="worker-card" data-worker="yi">
+          <div class="worker-avatar">毅</div>
+          <div class="worker-info">
+            <div class="worker-stats">
+              <span class="worker-stat"><strong id="yiUnprocessed">--</strong> 未處理</span>
+              <span class="worker-stat"><strong id="yiPending">--</strong> 待處理</span>
+            </div>
+          </div>
+          <div class="worker-status online"></div>
+        </div>
+        <div class="worker-card" data-worker="you">
+          <div class="worker-avatar">祐</div>
+          <div class="worker-info">
+            <div class="worker-stats">
+              <span class="worker-stat"><strong id="youUnprocessed">--</strong> 未處理</span>
+              <span class="worker-stat"><strong id="youPending">--</strong> 待處理</span>
+            </div>
+          </div>
+          <div class="worker-status"></div>
+        </div>
+        <div class="worker-card" data-worker="xiang">
+          <div class="worker-avatar">翔</div>
+          <div class="worker-info">
+            <div class="worker-stats">
+              <span class="worker-stat"><strong id="xiangUnprocessed">--</strong> 未處理</span>
+              <span class="worker-stat"><strong id="xiangPending">--</strong> 待處理</span>
+            </div>
+          </div>
+          <div class="worker-status"></div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h3>最近訂單</h3>
+        <a href="#" class="link-more" data-view="orders">查看全部</a>
+      </div>
+      <div class="orders-table-wrapper">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>訂單編號</th>
+              <th>客戶</th>
+              <th>品項</th>
+              <th>規格</th>
+              <th>交期</th>
+              <th>狀態</th>
+              <th>進度</th>
+            </tr>
+          </thead>
+          <tbody id="recentOrdersBody">
+            <tr>
+              <td colspan="7" class="loading-row">
+                <div class="skeleton" style="height: 20px; width: 100%;"></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" id="ordersView">
+      <div class="orders-filters">
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-filter="all">全部</button>
+          <button class="filter-tab" data-filter="in-progress">進行中</button>
+          <button class="filter-tab" data-filter="ready">待出貨</button>
+          <button class="filter-tab" data-filter="completed">已完成</button>
+        </div>
+        <div class="filter-selects">
+          <select class="form-select" id="filterCategory">
+            <option value="">所有品項</option>
+            <option value="massage-bed">指壓床</option>
+            <option value="spa-bed">SPA 床</option>
+            <option value="massage-chair">腳底按摩椅</option>
+            <option value="repair">維修</option>
+          </select>
+          <select class="form-select" id="filterCity">
+            <option value="">所有城市</option>
+          </select>
+        </div>
+      </div>
+      <div class="orders-table-wrapper">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>訂單編號</th>
+              <th>客戶</th>
+              <th>品項</th>
+              <th>規格 / 數量</th>
+              <th>皮色</th>
+              <th>交期</th>
+              <th>狀態</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" id="newOrderView">
+      <form class="order-form" id="orderForm">
+        <div class="form-section">
+          <h3 class="form-section-title">基本資料</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">客戶名稱 *</label>
+              <input type="text" class="form-input" name="customerName" required placeholder="客戶或店家名稱">
+            </div>
+            <div class="form-group">
+              <label class="form-label">下單日期</label>
+              <input type="date" class="form-input" name="createdDate" id="createdDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">預計交期</label>
+              <input type="date" class="form-input" name="deadline">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">地址資料</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">城市</label>
+              <select class="form-select" name="city" id="citySelect">
+                <option value="">選擇城市</option>
+                <option value="台北市">台北市</option>
+                <option value="新北市">新北市</option>
+                <option value="桃園市">桃園市</option>
+                <option value="台中市">台中市</option>
+                <option value="台南市">台南市</option>
+                <option value="高雄市">高雄市</option>
+                <option value="基隆市">基隆市</option>
+                <option value="新竹市">新竹市</option>
+                <option value="嘉義市">嘉義市</option>
+                <option value="新竹縣">新竹縣</option>
+                <option value="苗栗縣">苗栗縣</option>
+                <option value="彰化縣">彰化縣</option>
+                <option value="南投縣">南投縣</option>
+                <option value="雲林縣">雲林縣</option>
+                <option value="嘉義縣">嘉義縣</option>
+                <option value="屏東縣">屏東縣</option>
+                <option value="宜蘭縣">宜蘭縣</option>
+                <option value="花蓮縣">花蓮縣</option>
+                <option value="台東縣">台東縣</option>
+                <option value="澎湖縣">澎湖縣</option>
+                <option value="金門縣">金門縣</option>
+                <option value="連江縣">連江縣</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">地區</label>
+              <input type="text" class="form-input" name="district" placeholder="例：大安區">
+            </div>
+            <div class="form-group span-2">
+              <label class="form-label">完整地址</label>
+              <input type="text" class="form-input" name="address" placeholder="請輸入詳細地址">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">產品資料</h3>
+          <div class="product-items-container" id="productItemsContainer">
+            <!-- Product items will be added here dynamically -->
+          </div>
+          <button type="button" class="btn-add-product" id="btnAddProduct">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14m-7-7h14"></path>
+            </svg>
+            新增其他品項
+          </button>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title">備註</h3>
+          <div class="form-group">
+            <label class="form-label">特殊需求</label>
+            <textarea class="form-input form-textarea" name="specialRequirements" rows="3" placeholder="其他特殊要求或備註..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="btnCancelOrder">取消</button>
+          <button type="submit" class="btn btn-accent btn-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <path d="M22 4L12 14.01l-3-3"></path>
+            </svg>
+            新增訂單
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="view" id="deliveryView">
+      <div class="delivery-groups" id="deliveryGroups">
+        <p class="text-muted text-center">載入中...</p>
+      </div>
+    </section>
+
+    <section class="view" id="statsView">
+      <div class="yi-stats-header">
+        <div class="yi-avatar">毅</div>
+        <div class="yi-info">
+          <h3>毅的產量統計</h3>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btnClearStats">清空統計</button>
+      </div>
+
+      <div class="yi-stats-grid">
+        <div class="yi-stat-card current">
+          <span class="yi-stat-label" id="currentMonthLabel">本月</span>
+          <span class="yi-stat-value" id="currentMonthCount">0</span>
+          <span class="yi-stat-unit">件</span>
+        </div>
+        <div class="yi-stat-card previous">
+          <span class="yi-stat-label" id="prevMonthLabel">上月</span>
+          <span class="yi-stat-value" id="prevMonthCount">0</span>
+          <span class="yi-stat-unit">件</span>
+        </div>
+      </div>
+
+      <div class="yi-stats-detail">
+        <div class="chart-card">
+          <h4 id="currentCategoryTitle">本月品項</h4>
+          <div class="yi-category-list" id="currentCategoryChart"></div>
+        </div>
+        <div class="chart-card">
+          <h4 id="prevCategoryTitle">上月品項</h4>
+          <div class="yi-category-list" id="prevCategoryChart"></div>
+        </div>
+      </div>
+    </section>
+    <section class="view" id="testingView">
+      <div class="testing-card">
+        <div class="testing-card-header">
+          <h3>測試工具</h3>
+          <p>這裡提供清空全部工單的測試功能，正式使用前請小心操作。</p>
+        </div>
+        <div class="testing-card-body">
+          <div class="testing-warning">
+            <strong>注意：</strong>
+            這會刪除目前系統中的所有工單資料。
+          </div>
+          <button type="button" class="btn btn-danger" id="btnClearOrders">清空所有工單</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-overlay" id="orderModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">訂單詳情</h3>
+        <button class="modal-close" id="closeModal">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <div id="toastContainer"></div>
+  </div>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/cloud-status.js"></script>
+  <script src="js/management.js"></script>
+  <script>
+    // Splash Screen 控制
+    let lastHiddenTime = 0;
+    const isDesktopApp = Boolean(window.desktopApp?.isDesktop);
+    const SPLASH_THRESHOLD = 60000; // 1 分鐘
+
+    function showSplash() {
+      const splash = document.getElementById('splashScreen');
+      splash.classList.remove('hide');
+      // 重置 CSS 動畫
+      const content = splash.querySelector('.splash-content');
+      const clone = content.cloneNode(true);
+      content.parentNode.replaceChild(clone, content);
+
+      setTimeout(() => {
+        document.getElementById('splashScreen').classList.add('hide');
+      }, 3800);
+    }
+
+    // 初次載入
+    setTimeout(() => {
+      document.getElementById('splashScreen').classList.add('hide');
+    }, 3800);
+
+    // 記錄離開時間，超過 1 分鐘才顯示動畫
+    if (!isDesktopApp) {
+      document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        lastHiddenTime = Date.now();
+      } else if (document.visibilityState === 'visible') {
+        if (lastHiddenTime && (Date.now() - lastHiddenTime) >= SPLASH_THRESHOLD) {
+          showSplash();
+        }
+      }
+    });
+
+    // Capacitor App plugin
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+      window.Capacitor.Plugins.App.addListener('appStateChange', (state) => {
+        if (!state.isActive) {
+          lastHiddenTime = Date.now();
+        } else if (lastHiddenTime && (Date.now() - lastHiddenTime) >= SPLASH_THRESHOLD) {
+          showSplash();
+        }
+      });
+    }
+    }
+  </script>
+</body>
+</html>

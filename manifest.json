@@ -1,0 +1,22 @@
+{
+  "name": "翔躍工廠 ERP",
+  "short_name": "翔躍ERP",
+  "description": "工廠管理與工單系統",
+  "start_url": "/work_orders.html",
+  "display": "standalone",
+  "background_color": "#FDFBF7",
+  "theme_color": "#FDFBF7",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

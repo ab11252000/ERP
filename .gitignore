@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-desktop*/
+.venv/
+.web/
+.claude/
+*.exe
+img/
+build/
+.vscode/

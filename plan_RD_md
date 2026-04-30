@@ -1,0 +1,49 @@
+工廠 ERP 系統 - 技術實作規格書 (Developer 專用)】
+
+一、 技術開發建議
+- Frontend: Web App (Mobile First), 建議實作 PWA。
+- Backend: Firebase (Firestore / Functions / Auth)。
+- Real-time: 使用 Snapshot Listener 達成跨端狀態（如：言勾選裁皮）即時同步。
+
+二、 資料結構設計 (Data Schema)
+{
+  "orderId": "String (必填)",
+  "customerName": "String (必填)",
+  "dates": { "created": "Timestamp", "deadline": "Timestamp" },
+  "location": { "city": "String (Select)", "district": "String (Input)", "address": "String" },
+  "product": {
+    "category": "String (指壓床/SPA/按摩椅/維修)",
+    "model": "String (A/B/C)",
+    "dimensions": { "L": "Number", "W": "Number", "H": "Number" },
+    "mainColor": "String"
+  },
+  "accessories": {
+    "items": [ { "name": "String", "qty": "Number", "size": "String" } ],
+    "accessoryColor": "String (Nullable)",
+    "hasHole": "Boolean"
+  },
+  "status": {
+    "isMaterialOrdered": "Boolean (言)",
+    "isLeatherCut": "Boolean (言)",
+    "isBodyDone": "Boolean (毅)",
+    "isPartsDone": "Boolean (祐/翔)",
+    "stage": "Enum (InProgress/ReadyForDelivery/Completed)"
+  },
+  "repairLogic": { "requiresYanApproval": "Boolean", "isApproved": "Boolean" }
+}
+
+三、 核心邏輯實作 (Core Logic)
+1. 派單路由 (Routing Logic)：
+   - IF Category in [指壓床, SPA床]: 任務 -> 毅(Main) & 祐(Parts)。
+   - IF Category == 按摩椅: 任務 -> 毅(Main) & 翔(Parts)。
+   - 所有訂單完整明細同步至 言。
+2. 皮色計算規則 (Color Rule)：
+   - 配件顯示顏色 = accessories.accessoryColor ?? product.mainColor。
+3. 維修攔截器 (Repair Interceptor)：
+   - IF category == "指壓床維修": 設定 visibilityTo毅 = false，直到 言.approve()。
+4. 動態分組引擎 (Spec Aggregator)：
+   - 監聽 Orders 異動，執行動態 GroupBy(product.category + dimensions + mainColor)。
+
+四、 配送與統計
+- 配送分組: Filter(stage == "ReadyForDelivery").SortBy(city, district, deadline)。
+- 產量報表: 依 month(dates.created) 聚合已完成單據。
