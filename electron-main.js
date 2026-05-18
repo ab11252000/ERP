@@ -2,6 +2,9 @@ const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, Menu, shell } = require('electron');
 
+const REMOTE_URL = 'https://ab11252000.github.io/ERP/';
+const isDev = process.argv.includes('--dev');
+
 // 若 X: 磁碟存在（對應到 ERP 資料夾），將 userData 綁定到 X:\data
 const xDrive = 'X:\\data';
 try {
@@ -74,7 +77,11 @@ function createWindow() {
     shell.openExternal(url);
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  if (isDev) {
+    mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  } else {
+    mainWindow.loadURL(REMOTE_URL);
+  }
 
   mainWindow.on('close', () => {
     if (process.platform !== 'darwin') {

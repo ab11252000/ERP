@@ -1,0 +1,9 @@
+{
+  "appId": "com.xiangyue.erp",
+  "appName": "翔躍ERP",
+  "webDir": "www",
+  "server": {
+    "url": "https://ab11252000.github.io/ERP/",
+    "cleartext": false
+  }
+}
