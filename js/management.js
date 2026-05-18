@@ -1067,8 +1067,8 @@
     }
 
     tbody.innerHTML = filtered.map(order => `
-      <tr data-order-id="${escapeHtml(order.orderId)}">
-        <td data-label="訂單編號"><span class="order-id">${escapeHtml(order.orderId)}</span></td>
+      <tr data-order-id="${escapeHtml(order.orderId)}"${order.urgentFlag ? ' class="urgent-row"' : ''}>
+        <td data-label="訂單編號"><span class="order-id">${escapeHtml(order.orderId)}</span>${order.urgentFlag ? ' <span class="badge badge-urgent">急件</span>' : ''}</td>
         <td data-label="客戶">${escapeHtml(order.customerName)}</td>
         <td data-label="品項">${escapeHtml(getCategoryLabel(order.product.category))}</td>
         <td data-label="規格/數量">${escapeHtml(window.utils.getMainSpecLabel(order))} / ${window.utils.orderQuantity(order)}</td>
@@ -1360,6 +1360,7 @@
     modalFooter.innerHTML = `
       <button class="btn btn-danger" onclick="window.cancelOrder('${escapeJs(order.orderId)}')">取消訂單</button>
       <div style="flex: 1;"></div>
+      <button class="btn ${order.urgentFlag ? 'btn-urgent-active' : 'btn-urgent'}" onclick="window.toggleUrgentFlag('${escapeJs(order.orderId)}')">${order.urgentFlag ? '取消急件' : '設為急件'}</button>
       <button class="btn btn-secondary" onclick="document.getElementById('orderModal').classList.remove('active')">關閉</button>
       ${order.status.stage === 'ReadyForDelivery' ? `<button class="btn btn-accent" onclick="window.markComplete('${escapeJs(order.orderId)}')">標記為已完成</button>` : ''}
     `;
@@ -1412,6 +1413,19 @@
       onConfirm();
     });
   }
+
+  window.toggleUrgentFlag = function(orderId) {
+    const nextOrders = orders.map(o => {
+      if (o.orderId !== orderId) return o;
+      const updated = window.utils.cloneOrder(o);
+      updated.urgentFlag = !o.urgentFlag;
+      return updated;
+    });
+    window.erpStore.saveOrders(nextOrders);
+    orders = nextOrders;
+    renderAll();
+    window.viewOrder(orderId);
+  };
 
   window.cancelOrder = function(orderId) {
     const order = orders.find(o => o.orderId === orderId);

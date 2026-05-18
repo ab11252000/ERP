@@ -25,7 +25,7 @@
       "you.html",
       "css/**/*",
       "js/**/*",
-      "img/**/*",
+      "*.png",
       "manifest.json",
       "electron-main.js",
       "electron-preload.js"

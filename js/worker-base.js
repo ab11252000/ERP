@@ -805,6 +805,7 @@
   }
 
   function compareOrdersByDeadline(a, b) {
+    if (a.urgentFlag !== b.urgentFlag) return a.urgentFlag ? -1 : 1;
     const aTime = a.dates.deadline ? new Date(a.dates.deadline).getTime() : Number.MAX_SAFE_INTEGER;
     const bTime = b.dates.deadline ? new Date(b.dates.deadline).getTime() : Number.MAX_SAFE_INTEGER;
     return aTime - bTime;
@@ -877,11 +878,12 @@
     const showGroupSelect = editable && GROUPABLE_STATUSES.includes(listStatus) && getGroupsForStatus(listStatus).length > 0;
 
     return `
-      <div class="order-card ${window.utils.isUrgent(order.dates.deadline) || window.utils.isOverdue(order.dates.deadline) ? 'urgent' : ''}" data-order-id="${order.orderId}">
+      <div class="order-card ${order.urgentFlag ? 'urgent urgent-flag' : (window.utils.isUrgent(order.dates.deadline) || window.utils.isOverdue(order.dates.deadline) ? 'urgent' : '')}" data-order-id="${order.orderId}">
         <div class="order-card-header">
           <div class="order-meta">
             <span class="order-id">${order.orderId}</span>
             <span class="order-customer">${order.customerName}</span>
+            ${order.urgentFlag ? '<span class="urgent-flag-badge">急件</span>' : ''}
           </div>
           <div class="order-deadline">
             <span class="deadline-label">交期</span>

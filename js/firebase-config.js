@@ -393,6 +393,8 @@ window.firebaseConfig = firebaseConfig;
         };
       });
 
+      normalized.urgentFlag = Boolean(normalized.urgentFlag);
+
       normalized.status = Object.assign({
         stage: 'InProgress'
       }, normalized.status || {});

@@ -8,3 +8,14 @@ dist-desktop*/
 img/
 build/
 .vscode/
+
+# Android / Capacitor
+android/
+www/
+capacitor.config.json
+
+# Electron userData cache
+data/
+
+# Stray build artifacts
+*.png

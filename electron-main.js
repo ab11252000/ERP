@@ -1,5 +1,15 @@
 const path = require('path');
+const fs = require('fs');
 const { app, BrowserWindow, Menu, shell } = require('electron');
+
+// 若 X: 磁碟存在（對應到 ERP 資料夾），將 userData 綁定到 X:\data
+const xDrive = 'X:\\data';
+try {
+  if (fs.existsSync('X:\\')) {
+    fs.mkdirSync(xDrive, { recursive: true });
+    app.setPath('userData', xDrive);
+  }
+} catch (e) {}
 
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
