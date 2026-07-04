@@ -268,6 +268,16 @@
         </svg>
         <span>新增訂單</span>
       </a>
+      <a href="#" class="nav-item" data-view="materials">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <line x1="10" y1="9" x2="8" y2="9"></line>
+        </svg>
+        <span>物料管理</span>
+      </a>
       <a href="#" class="nav-item" data-view="delivery">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="1" y="3" width="15" height="13" rx="2"></rect>
@@ -373,6 +383,10 @@
               <span class="worker-stat"><strong id="yanPending">--</strong> 待處理</span>
             </div>
           </div>
+          <button class="btn-material" data-worker="yan" title="物料需求">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            備料
+          </button>
           <div class="worker-status online"></div>
         </div>
         <div class="worker-card" data-worker="yi">
@@ -383,6 +397,10 @@
               <span class="worker-stat"><strong id="yiPending">--</strong> 待處理</span>
             </div>
           </div>
+          <button class="btn-material" data-worker="yi" title="物料需求">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            備料
+          </button>
           <div class="worker-status online"></div>
         </div>
         <div class="worker-card" data-worker="you">
@@ -393,6 +411,10 @@
               <span class="worker-stat"><strong id="youPending">--</strong> 待處理</span>
             </div>
           </div>
+          <button class="btn-material" data-worker="you" title="物料需求">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            備料
+          </button>
           <div class="worker-status"></div>
         </div>
         <div class="worker-card" data-worker="xiang">
@@ -403,6 +425,10 @@
               <span class="worker-stat"><strong id="xiangPending">--</strong> 待處理</span>
             </div>
           </div>
+          <button class="btn-material" data-worker="xiang" title="物料需求">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            備料
+          </button>
           <div class="worker-status"></div>
         </div>
       </div>
@@ -610,6 +636,10 @@
         </div>
       </div>
     </section>
+    <section class="view" id="materialsView">
+      <div class="materials-grid" id="materialsGrid"></div>
+    </section>
+
     <section class="view" id="testingView">
       <div class="testing-card">
         <div class="testing-card-header">
@@ -626,6 +656,27 @@
       </div>
     </section>
   </main>
+
+  <div class="modal-overlay" id="materialModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 class="modal-title" id="materialModalTitle">物料需求</h3>
+        <button class="modal-close" id="closeMaterialModal">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="material-modal-hint">輸入此工人目前所需的物料、備件或特殊備品，儲存後會同步顯示在物料管理頁。</p>
+        <textarea id="materialModalTextarea" class="form-input form-textarea" rows="8" placeholder="例：黑色皮革 3碼&#10;泡棉 5塊&#10;木板螺絲 x20"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelMaterialModal">取消</button>
+        <button class="btn btn-accent btn-lg" id="confirmSaveMaterial">儲存需求</button>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-overlay" id="orderModal">
     <div class="modal">

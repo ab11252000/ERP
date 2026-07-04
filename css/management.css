@@ -1057,6 +1057,107 @@ body {
   pointer-events: auto;
 }
 
+/* Material Button on Worker Cards */
+.btn-material {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-material:hover {
+  color: var(--color-text);
+  border-color: var(--color-border);
+  background: var(--color-surface-hover);
+}
+
+.btn-material.has-notes {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+}
+
+/* Materials View */
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+}
+
+.material-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.material-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-bg-alt);
+}
+
+.material-worker-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--color-success);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.material-worker-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.material-notes {
+  padding: var(--space-lg);
+  font-size: 0.9rem;
+  line-height: 1.75;
+  min-height: 80px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.material-notes.empty {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.material-modal-hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-md);
+  line-height: 1.6;
+}
+
+.modal.modal-sm {
+  max-width: 460px;
+}
+
 /* ========== RESPONSIVE ========== */
 
 /* Tablet landscape */

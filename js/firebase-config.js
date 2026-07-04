@@ -879,6 +879,21 @@ window.firebaseConfig = firebaseConfig;
     }
   }
 
+  const MATERIALS_STORAGE_KEY = 'xiangyue-erp-materials-v1';
+  const MATERIALS_COLLECTION = 'workerMaterials';
+
+  function loadLocalMaterials() {
+    try {
+      return JSON.parse(localStorage.getItem(MATERIALS_STORAGE_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveLocalMaterials(data) {
+    localStorage.setItem(MATERIALS_STORAGE_KEY, JSON.stringify(data));
+  }
+
   const erpStore = {
     ready: null,
 
@@ -961,6 +976,52 @@ window.firebaseConfig = firebaseConfig;
           remoteCleanup();
         }
       };
+    },
+
+    async loadMaterials() {
+      if (firebaseDb) {
+        try {
+          const snap = await runWithPermissionRetry(() => firebaseDb.collection(MATERIALS_COLLECTION).get());
+          const data = {};
+          snap.forEach(doc => { data[doc.id] = String(doc.data().notes || ''); });
+          saveLocalMaterials(data);
+          return data;
+        } catch (e) {
+          console.warn('Failed to load materials from Firestore, using local:', e);
+        }
+      }
+      return loadLocalMaterials();
+    },
+
+    async saveMaterial(workerId, notes) {
+      const data = loadLocalMaterials();
+      data[workerId] = String(notes || '');
+      saveLocalMaterials(data);
+
+      if (firebaseDb) {
+        try {
+          await runWithPermissionRetry(() =>
+            firebaseDb.collection(MATERIALS_COLLECTION).doc(workerId).set({
+              notes: String(notes || ''),
+              updatedAt: new Date()
+            })
+          );
+        } catch (e) {
+          console.error('Failed to save material to Firestore:', e);
+        }
+      }
+      return data;
+    },
+
+    subscribeMaterials(callback) {
+      if (!firebaseDb) return () => {};
+      const unsub = firebaseDb.collection(MATERIALS_COLLECTION).onSnapshot(snap => {
+        const data = {};
+        snap.forEach(doc => { data[doc.id] = String(doc.data().notes || ''); });
+        saveLocalMaterials(data);
+        if (typeof callback === 'function') callback(data);
+      }, err => console.warn('Materials subscription error:', err));
+      return unsub;
     },
 
     getInfo() {

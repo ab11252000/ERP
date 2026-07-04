@@ -47,9 +47,11 @@
   const btnClearOrders = document.getElementById('btnClearOrders');
 
   let orders = [];
+  let materials = {};
   let currentFilter = 'all';
   let currentSearch = '';
   let unsubscribe = null;
+  let unsubscribeMaterials = null;
   let productCounter = 0;
 
   async function init() {
@@ -69,8 +71,19 @@
       renderAll();
     });
 
+    materials = await window.erpStore.loadMaterials();
+    renderMaterialsView();
+    updateWorkerMaterialBadges();
+
+    unsubscribeMaterials = window.erpStore.subscribeMaterials(nextMaterials => {
+      materials = nextMaterials;
+      renderMaterialsView();
+      updateWorkerMaterialBadges();
+    });
+
     window.addEventListener('beforeunload', () => {
       if (unsubscribe) unsubscribe();
+      if (unsubscribeMaterials) unsubscribeMaterials();
     }, { once: true });
   }
 
@@ -141,6 +154,20 @@
         event.preventDefault();
         switchView(link.dataset.view);
       });
+    });
+
+    document.querySelectorAll('.btn-material').forEach(btn => {
+      btn.addEventListener('click', event => {
+        event.stopPropagation();
+        openMaterialModal(btn.dataset.worker);
+      });
+    });
+
+    document.getElementById('closeMaterialModal')?.addEventListener('click', closeMaterialModal);
+    document.getElementById('cancelMaterialModal')?.addEventListener('click', closeMaterialModal);
+    document.getElementById('confirmSaveMaterial')?.addEventListener('click', saveMaterialModal);
+    document.getElementById('materialModal')?.addEventListener('click', event => {
+      if (event.target === document.getElementById('materialModal')) closeMaterialModal();
     });
   }
 
@@ -295,6 +322,8 @@
 
     titleMap.testing = '清除完成單';
     viewIdMap.testing = 'testingView';
+    titleMap.materials = '物料管理';
+    viewIdMap.materials = 'materialsView';
 
     const targetViewId = viewIdMap[viewName] || `${viewName}View`;
     navItems.forEach(item => item.classList.toggle('active', item.dataset.view === viewName));
@@ -303,6 +332,7 @@
     if (pageTitle) pageTitle.textContent = titleMap[viewName] || '總覽';
     if (viewName === 'delivery') renderDeliveryGroups();
     if (viewName === 'stats') renderStats();
+    if (viewName === 'materials') renderMaterialsView();
   }
 
   function getProductItemTemplate(index) {
@@ -1494,6 +1524,74 @@
 
   function getStageLabel(stage) {
     return stageLabels[stage] || stage || '-';
+  }
+
+  function renderMaterialsView() {
+    const container = document.getElementById('materialsGrid');
+    if (!container) return;
+
+    const workers = [
+      { id: 'yan', label: '言' },
+      { id: 'yi', label: '毅' },
+      { id: 'you', label: '祐' },
+      { id: 'xiang', label: '翔' }
+    ];
+
+    container.innerHTML = workers.map(w => {
+      const notes = materials[w.id] || '';
+      return `
+        <div class="material-card">
+          <div class="material-card-header">
+            <div class="material-worker-avatar">${escapeHtml(w.label)}</div>
+            <div class="material-worker-name">${escapeHtml(w.label)}</div>
+            <button class="btn btn-sm btn-secondary btn-edit-material" data-worker="${escapeHtml(w.id)}">編輯需求</button>
+          </div>
+          <div class="material-notes${notes ? '' : ' empty'}">${notes ? escapeHtml(notes).replace(/\n/g, '<br>') : '尚無備料需求'}</div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.btn-edit-material').forEach(btn => {
+      btn.addEventListener('click', () => openMaterialModal(btn.dataset.worker));
+    });
+  }
+
+  function openMaterialModal(workerId) {
+    const labels = { yan: '言', yi: '毅', you: '祐', xiang: '翔' };
+    const modal = document.getElementById('materialModal');
+    const title = document.getElementById('materialModalTitle');
+    const textarea = document.getElementById('materialModalTextarea');
+    if (!modal || !textarea) return;
+
+    title.textContent = `${labels[workerId] || workerId} — 物料需求`;
+    textarea.value = materials[workerId] || '';
+    modal.dataset.worker = workerId;
+    modal.classList.add('active');
+    setTimeout(() => textarea.focus(), 50);
+  }
+
+  function closeMaterialModal() {
+    document.getElementById('materialModal')?.classList.remove('active');
+  }
+
+  async function saveMaterialModal() {
+    const modal = document.getElementById('materialModal');
+    const textarea = document.getElementById('materialModalTextarea');
+    if (!modal || !textarea) return;
+
+    const workerId = modal.dataset.worker;
+    const notes = textarea.value;
+    materials = await window.erpStore.saveMaterial(workerId, notes);
+    renderMaterialsView();
+    updateWorkerMaterialBadges();
+    closeMaterialModal();
+    showToast('備料需求已儲存');
+  }
+
+  function updateWorkerMaterialBadges() {
+    document.querySelectorAll('.btn-material[data-worker]').forEach(btn => {
+      btn.classList.toggle('has-notes', Boolean(materials[btn.dataset.worker]));
+    });
   }
 
   function escapeHtml(value) {
