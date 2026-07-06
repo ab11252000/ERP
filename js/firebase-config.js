@@ -46,6 +46,53 @@ window.firebaseConfig = firebaseConfig;
     ReadyForDelivery: 'badge-info',
     Completed: 'badge-success'
   };
+  const INVENTORY_DEFAULT_ITEMS = {
+    footBasin: {
+      id: 'footBasin',
+      name: '腳盆',
+      stock: 0,
+      warningQty: 5,
+      enabled: true,
+      updatedAt: null
+    },
+    faucet: {
+      id: 'faucet',
+      name: '水龍頭',
+      stock: 0,
+      warningQty: 5,
+      enabled: true,
+      updatedAt: null
+    },
+    motor: {
+      id: 'motor',
+      name: '馬達',
+      stock: 0,
+      warningQty: 3,
+      enabled: true,
+      updatedAt: null
+    }
+  };
+  const INVENTORY_RULES = [
+    {
+      id: 'footBasinSet',
+      name: '腳盆成套扣庫',
+      trigger: 'hasFootBasin',
+      workerId: 'you',
+      deduct: [
+        { itemId: 'footBasin', qtyPerUnit: 1 },
+        { itemId: 'faucet', qtyPerUnit: 1 }
+      ]
+    },
+    {
+      id: 'electricMassageChairMotor',
+      name: '電動腳底按摩椅馬達',
+      trigger: 'isElectricMassageChair',
+      workerId: 'yi',
+      deduct: [
+        { itemId: 'motor', qtyPerUnit: 1 }
+      ]
+    }
+  ];
 
   function reviveDate(value) {
     if (!value) return null;
@@ -119,6 +166,79 @@ window.firebaseConfig = firebaseConfig;
 
     hasChairAddonWork(order) {
       return (order?.accessories?.items || []).some(item => item.name === '腳盆' || item.name === '小桌子');
+    },
+
+    hasFootBasin(order) {
+      return (order?.accessories?.items || []).some(item => item.name === '腳盆');
+    },
+
+    isElectricMassageChair(order) {
+      return order?.product?.category === 'massage-chair' && order?.product?.operationMode === '電動';
+    },
+
+    getInventoryRules() {
+      return INVENTORY_RULES.map(rule => ({
+        id: rule.id,
+        name: rule.name,
+        trigger: rule.trigger,
+        workerId: rule.workerId,
+        deduct: rule.deduct.map(item => Object.assign({}, item))
+      }));
+    },
+
+    getInventoryRequirements(order) {
+      const requirements = [];
+      const orderQty = this.orderQuantity(order);
+
+      INVENTORY_RULES.forEach(rule => {
+        const matched = rule.trigger === 'hasFootBasin'
+          ? this.hasFootBasin(order)
+          : rule.trigger === 'isElectricMassageChair'
+            ? this.isElectricMassageChair(order)
+            : false;
+
+        if (!matched) return;
+
+        rule.deduct.forEach(item => {
+          const accessoryItem = rule.id === 'footBasinSet'
+            ? (order?.accessories?.items || []).find(entry => entry.name === '腳盆')
+            : null;
+          const baseQty = accessoryItem ? Math.max(1, toNumber(accessoryItem.qty, orderQty)) : orderQty;
+          requirements.push({
+            ruleId: rule.id,
+            ruleName: rule.name,
+            itemId: item.itemId,
+            qty: baseQty * Math.max(1, toNumber(item.qtyPerUnit, 1))
+          });
+        });
+      });
+
+      return requirements;
+    },
+
+    isInventoryLockCompleted(order, ruleId) {
+      const lock = order?.inventoryLocks?.[ruleId];
+      if (lock?.status === 'consumed' || lock?.completed === true) return true;
+
+      const rule = INVENTORY_RULES.find(item => item.id === ruleId);
+      if (!rule?.workerId) return false;
+      return this.getWorkflowStatus(order, rule.workerId) === 'completed';
+    },
+
+    updateInventoryLocksForWorkerCompletion(order, workerId) {
+      const updatedLocks = Object.assign({}, order?.inventoryLocks || {});
+      INVENTORY_RULES
+        .filter(rule => rule.workerId === workerId)
+        .forEach(rule => {
+          const lock = updatedLocks[rule.id];
+          if (!lock || lock.status === 'released') return;
+          updatedLocks[rule.id] = Object.assign({}, lock, {
+            status: 'consumed',
+            completed: true,
+            completedAt: new Date()
+          });
+        });
+      return updatedLocks;
     },
 
     hasSmallTable(order) {
@@ -209,6 +329,10 @@ window.firebaseConfig = firebaseConfig;
       return this.collectColors(order).some(color => !this.isStandardColor(color));
     },
 
+    getSpecialColors(order) {
+      return Array.from(new Set(this.collectColors(order).filter(color => !this.isStandardColor(color))));
+    },
+
     requiresYanMaterial(order) {
       return order?.product?.category === 'spa-bed' || this.isSpecialColor(order);
     },
@@ -244,7 +368,7 @@ window.firebaseConfig = firebaseConfig;
         const items = order?.accessories?.items || [];
         const hasChairAccessory = items.some(item => ['跨腳椅', '師傅椅'].includes(item.name));
         const hasChairAddon = items.some(item => ['腳盆', '小桌子'].includes(item.name));
-        const hasBedAccessory = items.some(item => ['枕頭', '大枕頭', '馬蹄枕', '跨腳枕', '小圓椅'].includes(item.name));
+        const hasBedAccessory = items.some(item => ['枕頭', '大枕頭', '層板', '馬蹄枕', '跨腳枕', '小圓椅'].includes(item.name));
 
         if (hasChairAccessory) workers.push('xiang');
         if (hasChairAddon) workers.push('you', 'xiang');
@@ -292,6 +416,10 @@ window.firebaseConfig = firebaseConfig;
       }
 
       if (category === 'spa-bed' && (workerId === 'yi' || workerId === 'you')) {
+        return true;
+      }
+
+      if ((workerId === 'yi' || workerId === 'you') && this.isBedCategory(category)) {
         return true;
       }
 
@@ -403,10 +531,14 @@ window.firebaseConfig = firebaseConfig;
 
       normalized.urgentFlag = Boolean(normalized.urgentFlag);
 
+      const leatherYards = toNumber(normalized.leatherYards, 0);
+      normalized.leatherYards = leatherYards > 0 ? leatherYards : null;
+
       normalized.status = Object.assign({
         stage: 'InProgress'
       }, normalized.status || {});
 
+      normalized.inventoryLocks = normalizeInventoryLocks(normalized.inventoryLocks);
       normalized.workflow = Object.assign({}, normalized.workflow || {});
       normalized.workflowDates = Object.assign({}, normalized.workflowDates || {});
 
@@ -483,6 +615,24 @@ window.firebaseConfig = firebaseConfig;
 
   function normalizeOrders(list) {
     return (Array.isArray(list) ? list : []).map(order => utils.normalizeOrder(order));
+  }
+
+  function normalizeInventoryLocks(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+
+    return Object.entries(value).reduce((locks, [ruleId, lock]) => {
+      const items = Array.isArray(lock?.items) ? lock.items : [];
+      locks[ruleId] = {
+        status: ['reserved', 'consumed', 'released'].includes(lock?.status) ? lock.status : 'reserved',
+        completed: Boolean(lock?.completed),
+        completedAt: reviveDate(lock?.completedAt),
+        items: items.map(item => ({
+          itemId: String(item?.itemId || ''),
+          qty: Math.max(0, toNumber(item?.qty, 0))
+        })).filter(item => item.itemId && item.qty > 0)
+      };
+      return locks;
+    }, {});
   }
 
   function cloneStatus() {
@@ -889,6 +1039,14 @@ window.firebaseConfig = firebaseConfig;
 
   const MATERIALS_STORAGE_KEY = 'xiangyue-erp-materials-v1';
   const MATERIALS_COLLECTION = 'workerMaterials';
+  const INVENTORY_ITEMS_STORAGE_KEY = 'xiangyue-erp-inventory-items-v1';
+  const INVENTORY_MOVEMENTS_STORAGE_KEY = 'xiangyue-erp-inventory-movements-v1';
+  const INVENTORY_ITEMS_COLLECTION = 'inventoryItems';
+  const INVENTORY_MOVEMENTS_COLLECTION = 'inventoryMovements';
+  const INVENTORY_CHANGE_EVENT = 'xiangyue-inventory-changed';
+
+  let cachedInventoryItems = normalizeInventoryItems(loadLocalInventoryItems());
+  let cachedInventoryMovements = normalizeInventoryMovements(loadLocalInventoryMovements());
 
   function loadLocalMaterials() {
     try {
@@ -900,6 +1058,160 @@ window.firebaseConfig = firebaseConfig;
 
   function saveLocalMaterials(data) {
     localStorage.setItem(MATERIALS_STORAGE_KEY, JSON.stringify(data));
+  }
+
+  const YI_STATS_STORAGE_KEY = 'yiProductionStats';
+  const YI_STATS_COLLECTION = 'productionStats';
+  const YI_STATS_DOC = 'yi';
+
+  function loadLocalYiStats() {
+    try {
+      return JSON.parse(localStorage.getItem(YI_STATS_STORAGE_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveLocalYiStats(data) {
+    localStorage.setItem(YI_STATS_STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function normalizeInventoryItem(item, id) {
+    const defaultItem = INVENTORY_DEFAULT_ITEMS[id] || {};
+    const source = Object.assign({}, defaultItem, item || {});
+    return {
+      id: String(source.id || id || ''),
+      name: String(source.name || defaultItem.name || id || ''),
+      stock: toNumber(source.stock, 0),
+      warningQty: Math.max(0, toNumber(source.warningQty, defaultItem.warningQty || 0)),
+      enabled: source.enabled !== false,
+      updatedAt: reviveDate(source.updatedAt) || null
+    };
+  }
+
+  function normalizeInventoryItems(data) {
+    const source = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+    const next = {};
+
+    Object.keys(INVENTORY_DEFAULT_ITEMS).forEach(id => {
+      next[id] = normalizeInventoryItem(source[id], id);
+    });
+
+    Object.keys(source).forEach(id => {
+      if (next[id]) return;
+      next[id] = normalizeInventoryItem(source[id], id);
+    });
+
+    return next;
+  }
+
+  function normalizeInventoryMovement(movement) {
+    const createdAt = reviveDate(movement?.createdAt) || new Date();
+    const id = String(movement?.id || `${createdAt.getTime()}-${Math.random().toString(36).slice(2, 8)}`);
+    return {
+      id,
+      itemId: String(movement?.itemId || ''),
+      itemName: String(movement?.itemName || movement?.itemId || ''),
+      delta: toNumber(movement?.delta, 0),
+      beforeQty: toNumber(movement?.beforeQty, 0),
+      afterQty: toNumber(movement?.afterQty, 0),
+      reason: String(movement?.reason || ''),
+      note: String(movement?.note || ''),
+      sourceType: String(movement?.sourceType || 'manual'),
+      sourceOrderId: movement?.sourceOrderId ? String(movement.sourceOrderId) : null,
+      ruleId: movement?.ruleId ? String(movement.ruleId) : null,
+      createdAt
+    };
+  }
+
+  function normalizeInventoryMovements(list) {
+    return (Array.isArray(list) ? list : [])
+      .map(normalizeInventoryMovement)
+      .filter(movement => movement.itemId)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  function loadLocalInventoryItems() {
+    try {
+      return JSON.parse(localStorage.getItem(INVENTORY_ITEMS_STORAGE_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveLocalInventoryItems(data) {
+    localStorage.setItem(INVENTORY_ITEMS_STORAGE_KEY, JSON.stringify(normalizeInventoryItems(data)));
+  }
+
+  function loadLocalInventoryMovements() {
+    try {
+      return JSON.parse(localStorage.getItem(INVENTORY_MOVEMENTS_STORAGE_KEY) || '[]');
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveLocalInventoryMovements(list) {
+    localStorage.setItem(INVENTORY_MOVEMENTS_STORAGE_KEY, JSON.stringify(normalizeInventoryMovements(list).slice(0, 500)));
+  }
+
+  function emitInventoryChanged() {
+    window.dispatchEvent(new CustomEvent(INVENTORY_CHANGE_EVENT));
+  }
+
+  function updateInventoryCache(items, options = {}) {
+    cachedInventoryItems = normalizeInventoryItems(items);
+    if (options.persistLocal !== false) saveLocalInventoryItems(cachedInventoryItems);
+    if (options.emitChange !== false) emitInventoryChanged();
+    return cachedInventoryItems;
+  }
+
+  function updateInventoryMovementsCache(movements, options = {}) {
+    cachedInventoryMovements = normalizeInventoryMovements(movements).slice(0, 500);
+    if (options.persistLocal !== false) saveLocalInventoryMovements(cachedInventoryMovements);
+    if (options.emitChange !== false) emitInventoryChanged();
+    return cachedInventoryMovements;
+  }
+
+  async function loadRemoteInventoryItems() {
+    if (!firebaseDb) return cachedInventoryItems;
+    const snap = await runWithPermissionRetry(() => firebaseDb.collection(INVENTORY_ITEMS_COLLECTION).get());
+    const data = {};
+    snap.forEach(doc => { data[doc.id] = Object.assign({}, doc.data(), { id: doc.id }); });
+    return normalizeInventoryItems(data);
+  }
+
+  async function persistRemoteInventoryItems(items) {
+    if (!firebaseDb) return;
+    const normalized = normalizeInventoryItems(items);
+    const batch = firebaseDb.batch();
+    Object.values(normalized).forEach(item => {
+      batch.set(firebaseDb.collection(INVENTORY_ITEMS_COLLECTION).doc(item.id), Object.assign({}, item, {
+        updatedAt: item.updatedAt || new Date()
+      }));
+    });
+    await runWithPermissionRetry(() => batch.commit());
+  }
+
+  async function loadRemoteInventoryMovements() {
+    if (!firebaseDb) return cachedInventoryMovements;
+    const snap = await runWithPermissionRetry(() =>
+      firebaseDb.collection(INVENTORY_MOVEMENTS_COLLECTION)
+        .orderBy('createdAt', 'desc')
+        .limit(200)
+        .get()
+    );
+    const rows = [];
+    snap.forEach(doc => rows.push(Object.assign({}, doc.data(), { id: doc.id })));
+    return normalizeInventoryMovements(rows);
+  }
+
+  async function persistRemoteInventoryMovement(movement) {
+    if (!firebaseDb) return;
+    const normalized = normalizeInventoryMovement(movement);
+    await runWithPermissionRetry(() =>
+      firebaseDb.collection(INVENTORY_MOVEMENTS_COLLECTION).doc(normalized.id).set(normalized)
+    );
   }
 
   const erpStore = {
@@ -986,6 +1298,121 @@ window.firebaseConfig = firebaseConfig;
       };
     },
 
+    async loadInventory() {
+      if (firebaseDb) {
+        try {
+          const items = await loadRemoteInventoryItems();
+          return updateInventoryCache(items, { emitChange: false });
+        } catch (e) {
+          console.warn('Failed to load inventory from Firestore, using local:', e);
+        }
+      }
+
+      return normalizeInventoryItems(cachedInventoryItems);
+    },
+
+    async saveInventory(nextItems) {
+      if (isCloudConfigured() && CLOUD_SOURCE_OF_TRUTH && !firebaseDb) {
+        setStoreStatus({
+          mode: 'firebase',
+          isReady: true,
+          isCollaborative: true,
+          error: '雲端資料庫尚未就緒，庫存未寫入。'
+        });
+        return normalizeInventoryItems(cachedInventoryItems);
+      }
+
+      const normalized = updateInventoryCache(nextItems);
+
+      if (firebaseDb) {
+        try {
+          await persistRemoteInventoryItems(normalized);
+        } catch (e) {
+          console.error('Failed to save inventory to Firestore:', e);
+        }
+      }
+
+      return normalizeInventoryItems(cachedInventoryItems);
+    },
+
+    subscribeInventory(callback) {
+      const handler = () => {
+        if (typeof callback === 'function') {
+          callback(normalizeInventoryItems(cachedInventoryItems), normalizeInventoryMovements(cachedInventoryMovements));
+        }
+      };
+      const storageHandler = event => {
+        if (event.key === INVENTORY_ITEMS_STORAGE_KEY) {
+          cachedInventoryItems = normalizeInventoryItems(loadLocalInventoryItems());
+          handler();
+        }
+        if (event.key === INVENTORY_MOVEMENTS_STORAGE_KEY) {
+          cachedInventoryMovements = normalizeInventoryMovements(loadLocalInventoryMovements());
+          handler();
+        }
+      };
+
+      window.addEventListener(INVENTORY_CHANGE_EVENT, handler);
+      window.addEventListener('storage', storageHandler);
+
+      let itemUnsubscribe = null;
+      let movementUnsubscribe = null;
+
+      if (firebaseDb) {
+        itemUnsubscribe = firebaseDb.collection(INVENTORY_ITEMS_COLLECTION).onSnapshot(snap => {
+          const data = {};
+          snap.forEach(doc => { data[doc.id] = Object.assign({}, doc.data(), { id: doc.id }); });
+          updateInventoryCache(data, { emitChange: false });
+          handler();
+        }, err => console.warn('Inventory subscription error:', err));
+
+        movementUnsubscribe = firebaseDb.collection(INVENTORY_MOVEMENTS_COLLECTION)
+          .orderBy('createdAt', 'desc')
+          .limit(200)
+          .onSnapshot(snap => {
+            const rows = [];
+            snap.forEach(doc => rows.push(Object.assign({}, doc.data(), { id: doc.id })));
+            updateInventoryMovementsCache(rows, { emitChange: false });
+            handler();
+          }, err => console.warn('Inventory movement subscription error:', err));
+      }
+
+      return () => {
+        window.removeEventListener(INVENTORY_CHANGE_EVENT, handler);
+        window.removeEventListener('storage', storageHandler);
+        itemUnsubscribe?.();
+        movementUnsubscribe?.();
+      };
+    },
+
+    async loadInventoryMovements() {
+      if (firebaseDb) {
+        try {
+          const movements = await loadRemoteInventoryMovements();
+          return updateInventoryMovementsCache(movements, { emitChange: false });
+        } catch (e) {
+          console.warn('Failed to load inventory movements from Firestore, using local:', e);
+        }
+      }
+
+      return normalizeInventoryMovements(cachedInventoryMovements);
+    },
+
+    async saveInventoryMovement(movement) {
+      const normalized = normalizeInventoryMovement(movement);
+      updateInventoryMovementsCache([normalized, ...cachedInventoryMovements]);
+
+      if (firebaseDb) {
+        try {
+          await persistRemoteInventoryMovement(normalized);
+        } catch (e) {
+          console.error('Failed to save inventory movement to Firestore:', e);
+        }
+      }
+
+      return normalized;
+    },
+
     async loadMaterials() {
       if (firebaseDb) {
         try {
@@ -1032,6 +1459,57 @@ window.firebaseConfig = firebaseConfig;
       return unsub;
     },
 
+    async loadYiStats() {
+      const localStats = loadLocalYiStats();
+
+      if (firebaseDb) {
+        try {
+          const doc = await runWithPermissionRetry(() => firebaseDb.collection(YI_STATS_COLLECTION).doc(YI_STATS_DOC).get());
+          if (doc.exists) {
+            const data = doc.data()?.months || {};
+            saveLocalYiStats(data);
+            return data;
+          }
+          if (Object.keys(localStats).length) {
+            return this.saveYiStats(localStats);
+          }
+        } catch (e) {
+          console.warn('Failed to load production stats from Firestore, using local:', e);
+        }
+      }
+      return localStats;
+    },
+
+    async saveYiStats(stats) {
+      const data = stats && typeof stats === 'object' ? stats : {};
+      saveLocalYiStats(data);
+
+      if (firebaseDb) {
+        try {
+          await runWithPermissionRetry(() =>
+            firebaseDb.collection(YI_STATS_COLLECTION).doc(YI_STATS_DOC).set({
+              months: data,
+              updatedAt: new Date()
+            })
+          );
+        } catch (e) {
+          console.error('Failed to save production stats to Firestore:', e);
+        }
+      }
+      return data;
+    },
+
+    subscribeYiStats(callback) {
+      if (!firebaseDb) return () => {};
+      const unsub = firebaseDb.collection(YI_STATS_COLLECTION).doc(YI_STATS_DOC).onSnapshot(doc => {
+        if (!doc.exists) return;
+        const data = doc.data()?.months || {};
+        saveLocalYiStats(data);
+        if (typeof callback === 'function') callback(data);
+      }, err => console.warn('Production stats subscription error:', err));
+      return unsub;
+    },
+
     getInfo() {
       return cloneStatus();
     }
@@ -1042,6 +1520,14 @@ window.firebaseConfig = firebaseConfig;
 
   if (!window.localStorage.getItem(STORAGE_KEY)) {
     persistLocalOrders(defaultOrders);
+  }
+
+  if (!window.localStorage.getItem(INVENTORY_ITEMS_STORAGE_KEY)) {
+    saveLocalInventoryItems(INVENTORY_DEFAULT_ITEMS);
+  }
+
+  if (!window.localStorage.getItem(INVENTORY_MOVEMENTS_STORAGE_KEY)) {
+    saveLocalInventoryMovements([]);
   }
 
   storeReadyPromise = initializeStore();

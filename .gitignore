@@ -18,3 +18,6 @@ data/
 
 # Stray build artifacts
 *.png
+
+# Local notes
+*.md

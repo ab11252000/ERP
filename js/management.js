@@ -48,15 +48,21 @@
 
   let orders = [];
   let materials = {};
+  let inventoryItems = {};
+  let inventoryMovements = [];
   let currentFilter = 'all';
   let currentSearch = '';
   let unsubscribe = null;
   let unsubscribeMaterials = null;
+  let unsubscribeInventory = null;
+  let unsubscribeYiStats = null;
   let productCounter = 0;
 
   async function init() {
     await window.erpStore.ready;
     orders = window.erpStore.loadOrders();
+    inventoryItems = await window.erpStore.loadInventory();
+    inventoryMovements = await window.erpStore.loadInventoryMovements();
     hydrateCleanupView();
     bindEvents();
     setCurrentDate();
@@ -71,9 +77,21 @@
       renderAll();
     });
 
+    unsubscribeInventory = window.erpStore.subscribeInventory((nextItems, nextMovements) => {
+      inventoryItems = nextItems;
+      inventoryMovements = nextMovements;
+      renderInventoryAlert();
+      renderInventoryView();
+    });
+
     materials = await window.erpStore.loadMaterials();
     renderMaterialsView();
     updateWorkerMaterialBadges();
+
+    await window.erpStore.loadYiStats();
+    renderStats();
+
+    unsubscribeYiStats = window.erpStore.subscribeYiStats(() => renderStats());
 
     unsubscribeMaterials = window.erpStore.subscribeMaterials(nextMaterials => {
       materials = nextMaterials;
@@ -84,6 +102,8 @@
     window.addEventListener('beforeunload', () => {
       if (unsubscribe) unsubscribe();
       if (unsubscribeMaterials) unsubscribeMaterials();
+      if (unsubscribeInventory) unsubscribeInventory();
+      if (unsubscribeYiStats) unsubscribeYiStats();
     }, { once: true });
   }
 
@@ -168,6 +188,12 @@
     document.getElementById('confirmSaveMaterial')?.addEventListener('click', saveMaterialModal);
     document.getElementById('materialModal')?.addEventListener('click', event => {
       if (event.target === document.getElementById('materialModal')) closeMaterialModal();
+    });
+
+    document.addEventListener('click', event => {
+      const inventoryAction = event.target.closest('[data-inventory-action]');
+      if (!inventoryAction) return;
+      handleInventoryAction(inventoryAction.dataset.itemId, inventoryAction.dataset.inventoryAction);
     });
   }
 
@@ -310,14 +336,16 @@
       orders: '訂單管理',
       'new-order': '新增訂單',
       delivery: '配送規劃',
-      stats: '產量統計'
+      stats: '產量統計',
+      inventory: '庫存'
     };
     const viewIdMap = {
       dashboard: 'dashboardView',
       orders: 'ordersView',
       'new-order': 'newOrderView',
       delivery: 'deliveryView',
-      stats: 'statsView'
+      stats: 'statsView',
+      inventory: 'inventoryView'
     };
 
     titleMap.testing = '清除完成單';
@@ -333,6 +361,7 @@
     if (viewName === 'delivery') renderDeliveryGroups();
     if (viewName === 'stats') renderStats();
     if (viewName === 'materials') renderMaterialsView();
+    if (viewName === 'inventory') renderInventoryView();
   }
 
   function getProductItemTemplate(index) {
@@ -488,9 +517,11 @@
             <div class="accessories-add">
               <span class="form-label">加購配件</span>
               <div class="accessories-buttons">
+                <button type="button" class="btn btn-sm btn-secondary accessory-btn" data-accessory="pillow" data-index="${index}">枕頭</button>
                 <button type="button" class="btn btn-sm btn-secondary accessory-btn" data-accessory="footrest" data-index="${index}">跨腳枕</button>
                 <button type="button" class="btn btn-sm btn-secondary accessory-btn" data-accessory="horseshoe" data-index="${index}">馬蹄枕</button>
                 <button type="button" class="btn btn-sm btn-secondary accessory-btn" data-accessory="stool" data-index="${index}">小圓椅</button>
+                <button type="button" class="btn btn-sm btn-secondary accessory-btn" data-accessory="shelf" data-index="${index}">層板</button>
               </div>
             </div>
 
@@ -536,6 +567,7 @@
                   <option value="">選擇配件</option>
                   <option value="枕頭">枕頭</option>
                   <option value="大枕頭">大枕頭</option>
+                  <option value="層板">層板</option>
                   <option value="馬蹄枕">馬蹄枕</option>
                   <option value="跨腳枕">跨腳枕</option>
                   <option value="小圓椅">小圓椅</option>
@@ -762,9 +794,11 @@
     }
 
     const labelMap = {
+      pillow: '枕頭',
       footrest: '跨腳枕',
       horseshoe: '馬蹄枕',
-      stool: '小圓椅'
+      stool: '小圓椅',
+      shelf: '層板'
     };
 
     const accessoryItem = document.createElement('div');
@@ -819,7 +853,7 @@
     return `${date}${suffix}-${offset}`;
   }
 
-  function handleOrderSubmit(event) {
+  async function handleOrderSubmit(event) {
     event.preventDefault();
 
     try {
@@ -898,13 +932,14 @@
         }));
       }
 
-      window.erpStore.saveOrders([...newOrders, ...orders]);
+      const reservedOrders = await applyInventoryForNewOrders(newOrders);
+      await window.erpStore.saveOrders([...reservedOrders, ...orders]);
       orders = window.erpStore.loadOrders();
       populateCityFilter();
       renderAll();
 
       const customerLabel = customerName.length > 6 ? customerName.slice(0, 6) + '...' : customerName;
-      showToast(`工單已建立：${customerLabel}（${newOrders.length} 筆）`);
+      showToast(`工單已建立：${customerLabel}（${reservedOrders.length} 筆）`);
       orderForm.reset();
       setDefaultCreatedDate();
       resetProductItems();
@@ -971,16 +1006,19 @@
         const qty = Math.max(1, Number(node.querySelector('[data-field="qty"]')?.value) || 1);
         const color = node.querySelector('[data-field="color"]')?.value?.trim() || chosenColor;
         const nameMap = {
+          pillow: '枕頭',
           footrest: '跨腳枕',
           horseshoe: '馬蹄枕',
-          stool: '小圓椅'
+          stool: '小圓椅',
+          shelf: '層板'
         };
+        const accessoryName = nameMap[node.dataset.accessory] || node.dataset.accessory;
         accessories.push({
-          name: nameMap[node.dataset.accessory] || node.dataset.accessory,
+          name: accessoryName,
           qty,
           size: sizeLabel,
           color,
-          category: 'bed-addon',
+          category: accessoryName === '枕頭' ? 'bed-pillow' : 'bed-addon',
           done: false
         });
       });
@@ -1072,7 +1110,328 @@
     renderOrders();
     renderDeliveryGroups();
     renderStats();
+    renderInventoryAlert();
+    renderInventoryView();
     updateCleanupSummary();
+  }
+
+  function getInventoryList() {
+    const preferredOrder = ['footBasin', 'faucet', 'motor'];
+    const items = Object.values(inventoryItems || {});
+    return items.sort((a, b) => {
+      const aIndex = preferredOrder.indexOf(a.id);
+      const bIndex = preferredOrder.indexOf(b.id);
+      if (aIndex !== -1 || bIndex !== -1) {
+        return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
+      }
+      return String(a.name).localeCompare(String(b.name), 'zh-Hant');
+    });
+  }
+
+  function getLowInventoryItems() {
+    return getInventoryList().filter(item => item.enabled !== false && item.stock < item.warningQty);
+  }
+
+  function renderInventoryAlert() {
+    const alert = document.getElementById('inventoryAlert');
+    if (!alert) return;
+
+    const lowItems = getLowInventoryItems();
+    if (!lowItems.length) {
+      alert.classList.add('hidden');
+      alert.innerHTML = '';
+      return;
+    }
+
+    alert.classList.remove('hidden');
+    alert.innerHTML = `
+      <strong>庫存不足：</strong>
+      ${lowItems.map(item => {
+        if (item.stock < 0) return `${escapeHtml(item.name)} ${item.stock}，請補貨`;
+        return `${escapeHtml(item.name)}剩 ${item.stock}，低於安全量 ${item.warningQty}`;
+      }).join('；')}
+    `;
+  }
+
+  function renderInventoryView() {
+    const summary = document.getElementById('inventorySummary');
+    const grid = document.getElementById('inventoryItemsGrid');
+    const movementList = document.getElementById('inventoryMovementList');
+    if (!summary || !grid || !movementList) return;
+
+    const items = getInventoryList();
+    const lowItems = getLowInventoryItems();
+    const totalStock = items.reduce((sum, item) => sum + Number(item.stock || 0), 0);
+
+    summary.innerHTML = `
+      <div class="inventory-summary-card">
+        <span class="inventory-summary-label">庫存品項</span>
+        <strong>${items.length}</strong>
+      </div>
+      <div class="inventory-summary-card">
+        <span class="inventory-summary-label">低於安全量</span>
+        <strong class="${lowItems.length ? 'danger' : 'ok'}">${lowItems.length}</strong>
+      </div>
+      <div class="inventory-summary-card">
+        <span class="inventory-summary-label">總庫存數</span>
+        <strong>${totalStock}</strong>
+      </div>
+    `;
+
+    grid.innerHTML = items.map(item => {
+      const isLow = item.enabled !== false && item.stock < item.warningQty;
+      return `
+        <div class="inventory-card ${isLow ? 'low' : ''}">
+          <div class="inventory-card-header">
+            <div>
+              <h3>${escapeHtml(item.name)}</h3>
+            </div>
+            <span class="inventory-status ${isLow ? 'danger' : 'ok'}">${isLow ? '需補貨' : '正常'}</span>
+          </div>
+          <div class="inventory-stock-row">
+            <span>目前庫存</span>
+            <strong>${item.stock}</strong>
+          </div>
+          <div class="inventory-settings">
+            <label>
+              <span>安全量</span>
+              <input type="number" min="0" class="form-input inventory-warning-input" data-item-id="${escapeHtml(item.id)}" value="${item.warningQty}">
+            </label>
+            <label class="inventory-toggle">
+              <input type="checkbox" data-item-id="${escapeHtml(item.id)}" ${item.enabled !== false ? 'checked' : ''}>
+              <span>啟用提醒</span>
+            </label>
+          </div>
+          <div class="inventory-actions">
+            <button type="button" class="btn btn-sm btn-secondary" data-item-id="${escapeHtml(item.id)}" data-inventory-action="in">入庫</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-item-id="${escapeHtml(item.id)}" data-inventory-action="out">扣庫</button>
+            <button type="button" class="btn btn-sm btn-dark" data-item-id="${escapeHtml(item.id)}" data-inventory-action="set">校正</button>
+            <button type="button" class="btn btn-sm btn-accent" data-item-id="${escapeHtml(item.id)}" data-inventory-action="settings">儲存設定</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if (!inventoryMovements.length) {
+      movementList.innerHTML = '<p class="text-muted text-center">尚無庫存異動紀錄</p>';
+      return;
+    }
+
+    movementList.innerHTML = inventoryMovements.slice(0, 80).map(movement => `
+      <div class="inventory-movement">
+        <div>
+          <strong>${escapeHtml(movement.itemName || movement.itemId)}</strong>
+          <span>${escapeHtml(movement.reason || '-')}</span>
+          ${movement.sourceOrderId ? `<span class="inventory-source">訂單 ${escapeHtml(movement.sourceOrderId)}</span>` : ''}
+          ${movement.note ? `<span class="inventory-source">${escapeHtml(movement.note)}</span>` : ''}
+        </div>
+        <div class="inventory-movement-right">
+          <span class="${movement.delta < 0 ? 'danger' : 'ok'}">${movement.delta > 0 ? '+' : ''}${movement.delta}</span>
+          <small>${movement.beforeQty} → ${movement.afterQty}</small>
+          <small>${escapeHtml(formatDateTime(movement.createdAt))}</small>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function buildMovement({ item, delta, beforeQty, afterQty, reason, sourceType = 'manual', sourceOrderId = null, ruleId = null, note = '' }) {
+    const createdAt = new Date();
+    return {
+      id: `${createdAt.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+      itemId: item.id,
+      itemName: item.name,
+      delta,
+      beforeQty,
+      afterQty,
+      reason,
+      sourceType,
+      sourceOrderId,
+      ruleId,
+      note,
+      createdAt
+    };
+  }
+
+  async function saveInventoryWithMovements(nextItems, movements) {
+    inventoryItems = await window.erpStore.saveInventory(nextItems);
+    for (const movement of movements) {
+      await window.erpStore.saveInventoryMovement(movement);
+    }
+    inventoryMovements = await window.erpStore.loadInventoryMovements();
+    renderInventoryAlert();
+    renderInventoryView();
+  }
+
+  async function handleInventoryAction(itemId, action) {
+    const item = inventoryItems[itemId];
+    if (!item) return;
+
+    if (action === 'settings') {
+      const card = document.querySelector(`.inventory-card [data-item-id="${CSS.escape(itemId)}"]`)?.closest('.inventory-card');
+      const warningQty = Math.max(0, Number(card?.querySelector('.inventory-warning-input')?.value || 0));
+      const enabled = Boolean(card?.querySelector('.inventory-toggle input')?.checked);
+      const nextItems = Object.assign({}, inventoryItems, {
+        [itemId]: Object.assign({}, item, { warningQty, enabled, updatedAt: new Date() })
+      });
+      inventoryItems = await window.erpStore.saveInventory(nextItems);
+      renderInventoryAlert();
+      renderInventoryView();
+      showToast(`${item.name} 設定已儲存`);
+      return;
+    }
+
+    const actionLabels = { in: '入庫', out: '扣庫', set: '校正' };
+    const input = window.prompt(`${item.name} ${actionLabels[action] || '調整'}數量`, action === 'set' ? String(item.stock) : '1');
+    if (input === null) return;
+
+    const amount = Number(input);
+    if (!Number.isFinite(amount) || amount < 0) {
+      showToast('請輸入有效數量');
+      return;
+    }
+
+    const note = window.prompt('備註（可留空）', '') || '';
+    const beforeQty = Number(item.stock || 0);
+    const afterQty = action === 'set'
+      ? amount
+      : action === 'out'
+        ? beforeQty - amount
+        : beforeQty + amount;
+    const delta = afterQty - beforeQty;
+
+    const nextItem = Object.assign({}, item, { stock: afterQty, updatedAt: new Date() });
+    const movement = buildMovement({
+      item: nextItem,
+      delta,
+      beforeQty,
+      afterQty,
+      reason: action === 'set' ? '手動校正' : action === 'out' ? '手動扣庫' : '手動入庫',
+      note
+    });
+
+    await saveInventoryWithMovements(Object.assign({}, inventoryItems, { [itemId]: nextItem }), [movement]);
+    showToast(`${item.name} 已${actionLabels[action] || '調整'}`);
+  }
+
+  function buildInventoryLocks(order) {
+    const requirements = window.utils.getInventoryRequirements(order);
+    return requirements.reduce((locks, requirement) => {
+      if (!locks[requirement.ruleId]) {
+        locks[requirement.ruleId] = {
+          status: 'reserved',
+          completed: false,
+          items: []
+        };
+      }
+      locks[requirement.ruleId].items.push({
+        itemId: requirement.itemId,
+        qty: requirement.qty
+      });
+      return locks;
+    }, {});
+  }
+
+  async function applyInventoryForNewOrders(newOrders) {
+    const latestItems = await window.erpStore.loadInventory();
+    const nextItems = Object.assign({}, latestItems);
+    const movements = [];
+
+    const updatedOrders = newOrders.map(order => {
+      const updated = window.utils.cloneOrder(order);
+      if (updated.inventoryLocks && Object.keys(updated.inventoryLocks).length) {
+        return updated;
+      }
+
+      const locks = buildInventoryLocks(updated);
+      updated.inventoryLocks = locks;
+
+      Object.entries(locks).forEach(([ruleId, lock]) => {
+        lock.items.forEach(lockItem => {
+          const item = nextItems[lockItem.itemId];
+          if (!item) return;
+          const beforeQty = Number(item.stock || 0);
+          const afterQty = beforeQty - Number(lockItem.qty || 0);
+          nextItems[lockItem.itemId] = Object.assign({}, item, {
+            stock: afterQty,
+            updatedAt: new Date()
+          });
+          movements.push(buildMovement({
+            item: nextItems[lockItem.itemId],
+            delta: -Number(lockItem.qty || 0),
+            beforeQty,
+            afterQty,
+            reason: ruleId === 'footBasinSet' ? '腳盆成套扣庫存' : '派單扣庫存',
+            sourceType: 'order',
+            sourceOrderId: updated.orderId,
+            ruleId
+          }));
+        });
+      });
+
+      return updated;
+    });
+
+    if (movements.length) {
+      await saveInventoryWithMovements(nextItems, movements);
+    }
+
+    return updatedOrders;
+  }
+
+  async function releaseInventoryForOrder(order, reason = '訂單取消補回') {
+    const locks = order?.inventoryLocks || {};
+    const activeLocks = Object.entries(locks).filter(([, lock]) => lock?.status === 'reserved');
+    if (!activeLocks.length) return;
+
+    const latestItems = await window.erpStore.loadInventory();
+    const nextItems = Object.assign({}, latestItems);
+    const movements = [];
+
+    activeLocks.forEach(([ruleId, lock]) => {
+      if (window.utils.isInventoryLockCompleted(order, ruleId)) {
+        (lock.items || []).forEach(lockItem => {
+          const item = nextItems[lockItem.itemId];
+          if (!item) return;
+          movements.push(buildMovement({
+            item,
+            delta: 0,
+            beforeQty: Number(item.stock || 0),
+            afterQty: Number(item.stock || 0),
+            reason: '完成不補回',
+            sourceType: 'order',
+            sourceOrderId: order.orderId,
+            ruleId
+          }));
+        });
+        return;
+      }
+
+      (lock.items || []).forEach(lockItem => {
+        const item = nextItems[lockItem.itemId];
+        if (!item) return;
+        const beforeQty = Number(item.stock || 0);
+        const qty = Number(lockItem.qty || 0);
+        const afterQty = beforeQty + qty;
+        nextItems[lockItem.itemId] = Object.assign({}, item, {
+          stock: afterQty,
+          updatedAt: new Date()
+        });
+        movements.push(buildMovement({
+          item: nextItems[lockItem.itemId],
+          delta: qty,
+          beforeQty,
+          afterQty,
+          reason,
+          sourceType: 'order',
+          sourceOrderId: order.orderId,
+          ruleId
+        }));
+      });
+    });
+
+    if (movements.length) {
+      await saveInventoryWithMovements(nextItems, movements);
+    }
   }
 
   function renderDashboardStats() {
@@ -1084,7 +1443,7 @@
 
   function renderRecentOrders() {
     const tbody = document.getElementById('recentOrdersBody');
-    const recent = orders.slice(0, 5);
+    const recent = orders;
 
     if (!recent.length) {
       tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding: 40px;">目前沒有訂單</td></tr>';
@@ -1242,7 +1601,7 @@
   }
 
   function saveYiStatsToStorage(stats) {
-    localStorage.setItem('yiProductionStats', JSON.stringify(stats));
+    window.erpStore.saveYiStats(stats);
   }
 
   function handleClearStats() {
@@ -1251,7 +1610,7 @@
       showToast('已取消清除');
       return;
     }
-    localStorage.removeItem('yiProductionStats');
+    window.erpStore.saveYiStats({});
     renderStats();
     showToast('已清空統計資料');
   }
@@ -1493,9 +1852,10 @@
 
     showConfirmDialog({
       customerName: order.customerName,
-      onConfirm: () => {
+      onConfirm: async () => {
+        await releaseInventoryForOrder(order, '訂單取消補回');
         const nextOrders = orders.filter(o => o.orderId !== orderId);
-        window.erpStore.saveOrders(nextOrders);
+        await window.erpStore.saveOrders(nextOrders);
         orders = nextOrders;
         closeOrderModal();
         populateCityFilter();
@@ -1512,6 +1872,12 @@
       const updated = window.utils.cloneOrder(o);
       updated.status.stage = 'Completed';
       updated.completedDate = new Date();
+      updated.inventoryLocks = Object.entries(updated.inventoryLocks || {}).reduce((locks, [ruleId, lock]) => {
+        locks[ruleId] = lock.status === 'released'
+          ? lock
+          : Object.assign({}, lock, { status: 'consumed', completed: true, completedAt: new Date() });
+        return locks;
+      }, {});
       return updated;
     });
 
@@ -1554,6 +1920,17 @@
 
   function getStageLabel(stage) {
     return stageLabels[stage] || stage || '-';
+  }
+
+  function formatDateTime(value) {
+    const date = value instanceof Date ? value : new Date(value);
+    if (!date || Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleString('zh-TW', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
   function renderMaterialsView() {

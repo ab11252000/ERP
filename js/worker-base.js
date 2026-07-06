@@ -397,7 +397,53 @@
       }
     });
 
-    return section.groups.length ? [section] : [];
+    const sections = section.groups.length ? [section] : [];
+
+    const leatherSection = buildYanLeatherSection(orderList, prefix ? `${prefix} / 叫皮` : '叫皮統整');
+    if (leatherSection.groups.length) sections.push(leatherSection);
+
+    return sections;
+  }
+
+  function buildYanLeatherSection(orderList, title) {
+    const groups = new Map();
+
+    orderList.filter(order => window.utils.isSpecialColor(order)).forEach(order => {
+      const colorLabel = window.utils.getSpecialColors(order).join(' / ');
+      if (!groups.has(colorLabel)) {
+        groups.set(colorLabel, {
+          category: colorLabel,
+          categoryClass: 'leather-color-code',
+          spec: '',
+          tag: '',
+          unit: '碼',
+          totalQty: 0,
+          missingCount: 0,
+          rows: []
+        });
+      }
+
+      const group = groups.get(colorLabel);
+      const yards = Number(order.leatherYards) || 0;
+      group.totalQty += yards;
+      if (!yards) group.missingCount += 1;
+      group.rows.push({
+        orderId: order.orderId,
+        customer: order.customerName,
+        quantity: window.utils.orderQuantity(order),
+        detail: yards ? `${yards} 碼` : '未填碼數',
+        deadline: order.dates.deadline,
+        notes: getOrderNotes(order)
+      });
+    });
+
+    const sortedGroups = Array.from(groups.values()).sort((a, b) => a.category.localeCompare(b.category, 'zh-Hant'));
+    sortedGroups.forEach(group => {
+      if (group.missingCount) group.spec = `${group.missingCount} 張未填碼數`;
+      group.totalQty = Math.round(group.totalQty * 10) / 10;
+    });
+
+    return { title, groups: sortedGroups };
   }
 
   function buildYiSections(orderList, prefix = '') {
@@ -594,20 +640,20 @@
           <details class="summary-group">
             <summary class="summary-group-header">
               <div class="summary-spec">
-                <span class="summary-category">${group.category}</span>
+                <span class="summary-category${group.categoryClass ? ` ${group.categoryClass}` : ''}">${group.category}</span>
                 ${group.spec ? `<span class="summary-dims">${group.spec}</span>` : ''}
                 ${group.tag ? `<span class="summary-color">${group.tag}</span>` : ''}
               </div>
               <div class="summary-count">
                 <span class="count-num">${Number(group.totalQty)}</span>
-                <span class="count-unit">件</span>
+                <span class="count-unit">${group.unit || '件'}</span>
               </div>
             </summary>
             <div class="summary-orders">
               ${group.rows.map(row => `
                 <div class="summary-order-row" data-order-id="${row.orderId}">
                   <span class="row-id">${row.orderId}</span>
-                  <span class="row-customer">${row.customer} x${row.quantity}</span>
+                  <span class="row-customer">${row.customer} ${row.detail !== undefined ? row.detail : `x${row.quantity}`}</span>
                   <span class="row-deadline">${window.utils.formatDate(row.deadline)}</span>
                   ${renderRowNote(row.notes)}
                 </div>
@@ -930,10 +976,28 @@
           ${renderOrderSpecs(order, displayWorker)}
           ${renderOrderNotes(order)}
           ${renderOrderHighlights(order, workerForStatus)}
+          ${editable && displayWorker === 'yan' ? renderLeatherYardsSection(order) : ''}
           ${editable ? renderStatusActions(order, status, workerForStatus) : renderProgressPills(progress)}
           ${getAccessoryItemsForWorker(order, displayWorker).length ? renderAccessoryPreview(order, displayWorker) : ''}
           ${canDispatch ? renderDispatchActions(order) : ''}
           ${showGroupSelect ? renderGroupSelect(order.orderId, listStatus, currentGroup) : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderLeatherYardsSection(order) {
+    if (config.workerId !== 'yan' || !window.utils.isSpecialColor(order)) return '';
+
+    const specialColors = window.utils.getSpecialColors(order).join(' / ');
+    const value = order.leatherYards ? String(order.leatherYards) : '';
+
+    return `
+      <div class="leather-yards-section">
+        <span class="leather-yards-label">叫皮碼數 <span class="leather-yards-color">${escapeHtml(specialColors)}</span></span>
+        <div class="leather-yards-control">
+          <input type="number" class="leather-yards-input" inputmode="decimal" min="0" step="0.1" placeholder="輸入碼數" value="${escapeHtml(value)}">
+          <span class="leather-yards-unit">碼</span>
         </div>
       </div>
     `;
@@ -966,20 +1030,6 @@
     }
 
     return '';
-  }
-
-  function renderStatusActions(order, status, workerId) {
-    return `
-      <div class="workflow-actions">
-        ${renderWorkflowButton('unprocessed', '未處理', status)}
-        ${renderWorkflowButton('queued', '待處理', status)}
-        ${renderWorkflowButton('completed', '已完成', status)}
-      </div>
-    `;
-  }
-
-  function renderWorkflowButton(statusId, label, currentStatus) {
-    return `<button class="workflow-btn ${currentStatus === statusId ? 'active' : ''}" data-status="${statusId}">${label}</button>`;
   }
 
   function renderStatusActions(order, status, workerId) {
@@ -1048,52 +1098,18 @@
   function bindOrderCardEvents(container) {
     container.querySelectorAll('.order-card').forEach(card => {
       card.addEventListener('click', event => {
-        if (event.target.closest('.workflow-btn') || event.target.closest('.dispatch-btn') || event.target.closest('.group-select')) return;
+        if (event.target.closest('.workflow-select') || event.target.closest('.dispatch-btn') || event.target.closest('.group-select') || event.target.closest('.leather-yards-section')) return;
         openDrawer(card.dataset.orderId);
       });
     });
 
-    container.querySelectorAll('.workflow-btn').forEach(button => {
-      button.addEventListener('click', event => {
+    container.querySelectorAll('.leather-yards-input').forEach(input => {
+      input.addEventListener('click', event => event.stopPropagation());
+      input.addEventListener('change', event => {
         event.stopPropagation();
-        const orderId = button.closest('.order-card').dataset.orderId;
-        const nextStatus = button.dataset.status;
-        if (nextStatus === 'completed') {
-          const confirmed = window.confirm('確認要將這張工單移到已完成嗎？');
-          if (!confirmed) return;
-        }
-        setWorkflowStatus(orderId, nextStatus);
-      });
-    });
-
-    container.querySelectorAll('.dispatch-btn').forEach(button => {
-      button.addEventListener('click', event => {
-        event.stopPropagation();
-        const orderId = button.closest('.order-card').dataset.orderId;
-        handleDispatch(orderId, button.dataset.action, button.dataset.worker || null);
-      });
-    });
-
-    container.querySelectorAll('.group-select').forEach(select => {
-      select.addEventListener('click', event => {
-        event.stopPropagation();
-      });
-      select.addEventListener('change', event => {
-        event.stopPropagation();
-        const orderId = select.dataset.orderId;
-        const status = select.dataset.status;
-        const groupId = select.value;
-        setOrderGroup(orderId, status, groupId);
-        renderEverything();
-      });
-    });
-  }
-
-  function bindOrderCardEvents(container) {
-    container.querySelectorAll('.order-card').forEach(card => {
-      card.addEventListener('click', event => {
-        if (event.target.closest('.workflow-select') || event.target.closest('.dispatch-btn') || event.target.closest('.group-select')) return;
-        openDrawer(card.dataset.orderId);
+        const orderId = input.closest('.order-card').dataset.orderId;
+        const yards = Number(input.value);
+        setLeatherYards(orderId, Number.isFinite(yards) && yards > 0 ? Math.round(yards * 10) / 10 : null);
       });
     });
 
@@ -1161,6 +1177,9 @@
       const updated = window.utils.cloneOrder(o);
       updated.workflow[workerId] = nextStatus;
       updated.workflowDates[workerId] = nextStatus === 'completed' ? new Date() : null;
+      if (nextStatus === 'completed') {
+        updated.inventoryLocks = window.utils.updateInventoryLocksForWorkerCompletion(updated, workerId);
+      }
 
       if (workerId === 'yi' && updated.product.category === 'repair-bed' && nextStatus !== 'completed') {
         updated.status.stage = 'InProgress';
@@ -1179,6 +1198,21 @@
 
     const statusLabels = { unprocessed: '未處理', queued: '待處理', completed: '已完成' };
     showToast(`${order?.customerName || orderId}：${statusLabels[nextStatus] || nextStatus}`);
+  }
+
+  function setLeatherYards(orderId, yards) {
+    const order = orders.find(o => o.orderId === orderId);
+    const nextOrders = orders.map(o => {
+      if (o.orderId !== orderId) return o;
+      const updated = window.utils.cloneOrder(o);
+      updated.leatherYards = yards;
+      return updated;
+    });
+
+    window.erpStore.saveOrders(nextOrders);
+    showToast(yards
+      ? `${order?.customerName || orderId}：叫皮 ${yards} 碼`
+      : `${order?.customerName || orderId}：已清除碼數`);
   }
 
   function handleDispatch(orderId, action, workerId) {
@@ -1236,6 +1270,7 @@
         ${detailRow('品項', window.utils.getCategoryLabel(order.product.category))}
         ${detailRow('規格', window.utils.getMainSpecLabel(order))}
         ${detailRow('主色', order.product.mainColor || '-')}
+        ${config.workerId === 'yan' && window.utils.isSpecialColor(order) ? detailRow('叫皮碼數', order.leatherYards ? `${order.leatherYards} 碼` : '未填') : ''}
         ${detailRow('數量', window.utils.orderQuantity(order))}
         ${detailRow('交期', window.utils.formatFullDate(order.dates.deadline))}
       </div>

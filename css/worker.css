@@ -28,7 +28,7 @@ body {
 .worker-badge {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,7 +66,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 0;
   color: var(--color-text-secondary);
 }
 
@@ -90,7 +90,7 @@ body {
 .scope-btn {
   white-space: nowrap;
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--color-bg-alt);
   color: var(--color-text-muted);
   font-size: 0.8125rem;
@@ -197,7 +197,6 @@ body {
 .summary-color,
 .summary-dims,
 .spec-tag,
-.workflow-btn,
 .progress-pill,
 .task-owner,
 .row-category {
@@ -223,6 +222,16 @@ body {
   font-weight: 700;
 }
 
+.summary-category.leather-color-code {
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--color-text);
+  background: var(--color-accent-light);
+  padding: 5px 12px;
+}
+
 .summary-color {
   background: var(--color-accent-light);
   color: var(--color-accent-hover);
@@ -235,7 +244,8 @@ body {
 }
 
 .count-num {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
+  font-weight: 600;
   font-size: 1.75rem;
   color: var(--color-accent);
   line-height: 1;
@@ -315,7 +325,7 @@ body {
   color: var(--color-danger);
   background: rgba(181, 74, 74, 0.12);
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: 0;
   letter-spacing: 0.04em;
 }
 
@@ -467,7 +477,7 @@ body {
   max-width: 180px;
   padding: 8px 12px;
   border: 1px solid var(--color-border-light);
-  border-radius: 14px;
+  border-radius: 0;
   background: var(--color-bg-alt);
   color: var(--color-text-secondary);
   font-size: 0.8125rem;
@@ -479,26 +489,9 @@ body {
   border-color: var(--color-accent);
 }
 
-.workflow-btn {
-  padding: 5px 10px;
-  border: 1px solid var(--color-border-light);
-  border-radius: 999px;
-  color: var(--color-text-muted);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  opacity: 0.7;
-}
-
-.workflow-btn.active {
-  background: var(--color-bg-alt);
-  border-color: var(--color-border);
-  color: var(--color-text-secondary);
-  opacity: 1;
-}
-
 .progress-pill {
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--color-bg-alt);
   color: var(--color-text-muted);
   font-weight: 700;
@@ -553,7 +546,7 @@ body {
 .accessory-bullet {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--color-border);
   flex-shrink: 0;
 }
@@ -660,7 +653,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--color-bg-alt);
   font-family: var(--font-display);
   font-size: 0.9375rem;
@@ -849,7 +842,7 @@ body {
   background: var(--color-accent);
   color: white;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: 0;
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -864,7 +857,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 0;
   color: var(--color-text-muted);
   font-size: 1rem;
   opacity: 0;
@@ -932,7 +925,7 @@ body {
   padding: 20px;
   background: var(--color-surface);
   border: 1px solid var(--color-border-light);
-  border-radius: 16px;
+  border-radius: 0;
   box-shadow: 0 20px 60px rgba(24, 22, 18, 0.22);
 }
 
@@ -959,7 +952,7 @@ body {
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 0;
   background: var(--color-bg-alt);
   color: var(--color-text);
   font-size: 16px;
@@ -982,7 +975,7 @@ body {
 
 .input-dialog-btn {
   padding: 11px 14px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 0.9375rem;
   font-weight: 800;
   transition: transform 0.2s, background 0.2s;
@@ -1012,7 +1005,7 @@ body {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--color-border-light);
-  border-radius: 14px;
+  border-radius: 0;
   background: var(--color-bg-alt);
   color: var(--color-text-secondary);
   font-size: 0.8125rem;
@@ -1040,7 +1033,6 @@ body[data-worker="yi"] .row-category,
 body[data-worker="yi"] .summary-category,
 body[data-worker="yi"] .summary-color,
 body[data-worker="yi"] .summary-dims,
-body[data-worker="yi"] .workflow-btn,
 body[data-worker="yi"] .progress-pill,
 body[data-worker="yi"] .task-owner {
   font-size: 0.875rem;
@@ -1118,7 +1110,6 @@ body[data-worker="yi"] .detail-notes {
   font-size: 1.0625rem;
 }
 
-body[data-worker="yi"] .workflow-btn,
 body[data-worker="yi"] .progress-pill {
   padding: 7px 12px;
 }
@@ -1149,4 +1140,76 @@ body[data-worker="yi"] .drawer-title {
 
 body[data-worker="yi"] .detail-block-title {
   font-size: 0.875rem;
+}
+
+/* Leather yardage input (yan only, special colors) */
+.leather-yards-section {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 2px 0 var(--space-md);
+  padding: 12px 16px;
+  background: var(--color-bg-alt);
+}
+
+.leather-yards-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.leather-yards-color {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: 0.02em;
+}
+
+.leather-yards-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leather-yards-input {
+  width: 72px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-family: var(--font-mono);
+  text-align: right;
+  -moz-appearance: textfield;
+  appearance: textfield;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.leather-yards-input::-webkit-outer-spin-button,
+.leather-yards-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.leather-yards-input::placeholder {
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+}
+
+.leather-yards-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.leather-yards-unit {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
 }

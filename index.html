@@ -149,7 +149,7 @@
       width: 180px;
       height: 2px;
       background: rgba(184, 134, 56, 0.2);
-      border-radius: 2px;
+      border-radius: 0;
       overflow: hidden;
       position: relative;
     }
@@ -159,7 +159,7 @@
       width: 0%;
       background: linear-gradient(90deg, #b8862e, #f5d98a, #b8862e);
       background-size: 200% 100%;
-      border-radius: 2px;
+      border-radius: 0;
       animation: loadProgress 2s ease-in-out 1.6s forwards, shimmer 1.5s infinite linear;
     }
     @keyframes loadProgress {
@@ -278,6 +278,14 @@
         </svg>
         <span>物料管理</span>
       </a>
+      <a href="#" class="nav-item" data-view="inventory">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <path d="M3.27 6.96 12 12.01l8.73-5.05"></path>
+          <path d="M12 22.08V12"></path>
+        </svg>
+        <span>庫存</span>
+      </a>
       <a href="#" class="nav-item" data-view="delivery">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="1" y="3" width="15" height="13" rx="2"></rect>
@@ -342,6 +350,8 @@
         </button>
       </div>
     </header>
+
+    <div class="inventory-alert hidden" id="inventoryAlert"></div>
 
     <section class="view active" id="dashboardView">
       <div class="stats-grid">
@@ -437,7 +447,7 @@
         <h3>最近訂單</h3>
         <a href="#" class="link-more" data-view="orders">查看全部</a>
       </div>
-      <div class="orders-table-wrapper">
+      <div class="orders-table-wrapper recent-orders-table-wrapper">
         <table class="orders-table">
           <thead>
             <tr>
@@ -638,6 +648,17 @@
     </section>
     <section class="view" id="materialsView">
       <div class="materials-grid" id="materialsGrid"></div>
+    </section>
+
+    <section class="view" id="inventoryView">
+      <div class="inventory-summary" id="inventorySummary"></div>
+      <div class="inventory-items-grid" id="inventoryItemsGrid"></div>
+      <div class="inventory-movements-panel">
+        <div class="section-header">
+          <h3>異動紀錄</h3>
+        </div>
+        <div class="inventory-movement-list" id="inventoryMovementList"></div>
+      </div>
     </section>
 
     <section class="view" id="testingView">

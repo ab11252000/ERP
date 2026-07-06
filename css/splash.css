@@ -161,7 +161,7 @@
   width: 180px;
   height: 2px;
   background: rgba(184, 134, 56, 0.2);
-  border-radius: 2px;
+  border-radius: 0;
   overflow: hidden;
   position: relative;
 }
@@ -172,7 +172,7 @@
   width: 0%;
   background: linear-gradient(90deg, #b8862e, #f5d98a, #b8862e);
   background-size: 200% 100%;
-  border-radius: 2px;
+  border-radius: 0;
   animation: loadProgress 2s ease-in-out 1.6s forwards, shimmer 1.5s infinite linear;
 }
 
