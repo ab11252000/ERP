@@ -699,6 +699,50 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="inventoryAdjustModal">
+    <div class="modal modal-sm inventory-adjust-modal">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="inventoryAdjustTitle">調整庫存</h3>
+          <p class="inventory-adjust-subtitle" id="inventoryAdjustSubtitle">庫存異動</p>
+        </div>
+        <button class="modal-close" id="closeInventoryAdjustModal" aria-label="關閉">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <form id="inventoryAdjustForm">
+        <div class="modal-body">
+          <div class="inventory-adjust-meter">
+            <div class="inventory-adjust-current">
+              <span>目前庫存</span>
+              <strong id="inventoryAdjustCurrentQty">0</strong>
+              <small>原始數量</small>
+            </div>
+            <div class="inventory-adjust-preview" id="inventoryAdjustPreview">
+              <span>調整後</span>
+              <strong>0</strong>
+              <small>無變化</small>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="inventoryAdjustAmountLabel">數量</label>
+            <input type="number" class="form-input" id="inventoryAdjustAmount" min="0" step="1" inputmode="numeric" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">備註</label>
+            <textarea class="form-input form-textarea" id="inventoryAdjustNote" rows="3" placeholder="可留空，例如：廠商進貨、盤點校正"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelInventoryAdjustModal">取消</button>
+          <button type="submit" class="btn btn-accent btn-lg" id="confirmInventoryAdjust">儲存異動</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="orderModal">
     <div class="modal">
       <div class="modal-header">

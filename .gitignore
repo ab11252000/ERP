@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist-desktop*/
+dist-usb-portable/
 .venv/
 .web/
 .claude/

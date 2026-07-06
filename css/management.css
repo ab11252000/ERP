@@ -1308,9 +1308,77 @@ body {
 
 .inventory-actions {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-sm);
   margin-top: var(--space-lg);
+}
+
+.inventory-adjust-modal .modal-header {
+  align-items: flex-start;
+}
+
+.inventory-adjust-subtitle {
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.inventory-adjust-meter {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.inventory-adjust-current,
+.inventory-adjust-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 112px;
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-alt);
+  border-radius: var(--radius-md);
+}
+
+.inventory-adjust-current span,
+.inventory-adjust-preview span {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.inventory-adjust-current strong,
+.inventory-adjust-preview strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.inventory-adjust-preview {
+  background: rgba(52, 168, 83, 0.08);
+  border-color: rgba(52, 168, 83, 0.25);
+}
+
+.inventory-adjust-preview.negative {
+  background: rgba(220, 53, 69, 0.08);
+  border-color: rgba(220, 53, 69, 0.25);
+}
+
+.inventory-adjust-current small,
+.inventory-adjust-preview small {
+  min-height: 1.2em;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 0.8125rem;
+}
+
+.inventory-adjust-preview.negative strong,
+.inventory-adjust-preview.negative small {
+  color: #b02a37;
 }
 
 .inventory-movements-panel {
@@ -1440,9 +1508,23 @@ body {
     gap: 12px;
   }
 
-  .inventory-settings,
-  .inventory-actions {
+  .inventory-settings {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .inventory-actions {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .inventory-adjust-meter {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .inventory-adjust-current,
+  .inventory-adjust-preview {
+    min-height: 96px;
+    padding: 12px;
   }
 
   .inventory-movement {

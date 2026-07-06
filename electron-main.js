@@ -2,16 +2,16 @@ const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, Menu, shell } = require('electron');
 
-const REMOTE_URL = 'https://ab11252000.github.io/ERP/';
 const isDev = process.argv.includes('--dev');
 
-// 若 X: 磁碟存在（對應到 ERP 資料夾），將 userData 綁定到 X:\data
-const xDrive = 'X:\\data';
+const portableBaseDir = app.isPackaged
+  ? (process.env.PORTABLE_EXECUTABLE_DIR || path.dirname(process.execPath))
+  : __dirname;
+const portableDataDir = path.join(portableBaseDir, 'data');
+
 try {
-  if (fs.existsSync('X:\\')) {
-    fs.mkdirSync(xDrive, { recursive: true });
-    app.setPath('userData', xDrive);
-  }
+  fs.mkdirSync(portableDataDir, { recursive: true });
+  app.setPath('userData', portableDataDir);
 } catch (e) {}
 
 const gotTheLock = app.requestSingleInstanceLock();
@@ -77,11 +77,7 @@ function createWindow() {
     shell.openExternal(url);
   });
 
-  if (isDev) {
-    mainWindow.loadFile(path.join(__dirname, 'index.html'));
-  } else {
-    mainWindow.loadURL(REMOTE_URL);
-  }
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   mainWindow.on('close', () => {
     if (process.platform !== 'darwin') {

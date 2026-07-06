@@ -56,6 +56,7 @@
   let unsubscribeMaterials = null;
   let unsubscribeInventory = null;
   let unsubscribeYiStats = null;
+  let pendingInventoryAdjustment = null;
   let productCounter = 0;
 
   async function init() {
@@ -190,10 +191,23 @@
       if (event.target === document.getElementById('materialModal')) closeMaterialModal();
     });
 
+    document.getElementById('closeInventoryAdjustModal')?.addEventListener('click', closeInventoryAdjustModal);
+    document.getElementById('cancelInventoryAdjustModal')?.addEventListener('click', closeInventoryAdjustModal);
+    document.getElementById('inventoryAdjustModal')?.addEventListener('click', event => {
+      if (event.target === document.getElementById('inventoryAdjustModal')) closeInventoryAdjustModal();
+    });
+    document.getElementById('inventoryAdjustAmount')?.addEventListener('input', updateInventoryAdjustPreview);
+    document.getElementById('inventoryAdjustForm')?.addEventListener('submit', submitInventoryAdjustment);
+
     document.addEventListener('click', event => {
       const inventoryAction = event.target.closest('[data-inventory-action]');
       if (!inventoryAction) return;
       handleInventoryAction(inventoryAction.dataset.itemId, inventoryAction.dataset.inventoryAction);
+    });
+
+    document.addEventListener('change', event => {
+      if (!event.target.closest('.inventory-warning-input, .inventory-toggle input')) return;
+      saveInventorySettingsFromControl(event.target);
     });
   }
 
@@ -1206,7 +1220,6 @@
             <button type="button" class="btn btn-sm btn-secondary" data-item-id="${escapeHtml(item.id)}" data-inventory-action="in">入庫</button>
             <button type="button" class="btn btn-sm btn-secondary" data-item-id="${escapeHtml(item.id)}" data-inventory-action="out">扣庫</button>
             <button type="button" class="btn btn-sm btn-dark" data-item-id="${escapeHtml(item.id)}" data-inventory-action="set">校正</button>
-            <button type="button" class="btn btn-sm btn-accent" data-item-id="${escapeHtml(item.id)}" data-inventory-action="settings">儲存設定</button>
           </div>
         </div>
       `;
@@ -1266,51 +1279,162 @@
     const item = inventoryItems[itemId];
     if (!item) return;
 
-    if (action === 'settings') {
-      const card = document.querySelector(`.inventory-card [data-item-id="${CSS.escape(itemId)}"]`)?.closest('.inventory-card');
-      const warningQty = Math.max(0, Number(card?.querySelector('.inventory-warning-input')?.value || 0));
-      const enabled = Boolean(card?.querySelector('.inventory-toggle input')?.checked);
-      const nextItems = Object.assign({}, inventoryItems, {
-        [itemId]: Object.assign({}, item, { warningQty, enabled, updatedAt: new Date() })
-      });
-      inventoryItems = await window.erpStore.saveInventory(nextItems);
-      renderInventoryAlert();
-      renderInventoryView();
-      showToast(`${item.name} 設定已儲存`);
-      return;
-    }
+    openInventoryAdjustModal(item, action);
+  }
 
-    const actionLabels = { in: '入庫', out: '扣庫', set: '校正' };
-    const input = window.prompt(`${item.name} ${actionLabels[action] || '調整'}數量`, action === 'set' ? String(item.stock) : '1');
-    if (input === null) return;
+  async function saveInventorySettingsFromControl(control) {
+    const itemId = control?.dataset?.itemId;
+    const item = inventoryItems[itemId];
+    if (!item) return;
 
-    const amount = Number(input);
+    const card = control.closest('.inventory-card');
+    const warningQty = Math.max(0, Number(card?.querySelector('.inventory-warning-input')?.value || 0));
+    const enabled = Boolean(card?.querySelector('.inventory-toggle input')?.checked);
+    const nextItems = Object.assign({}, inventoryItems, {
+      [itemId]: Object.assign({}, item, { warningQty, enabled, updatedAt: new Date() })
+    });
+
+    inventoryItems = await window.erpStore.saveInventory(nextItems);
+    renderInventoryAlert();
+    renderInventoryView();
+    showToast(`${item.name} 設定已自動儲存`);
+  }
+
+  function getInventoryActionMeta(action) {
+    const meta = {
+      in: {
+        title: '手動入庫',
+        label: '入庫數量',
+        button: '確認入庫',
+        reason: '手動入庫',
+        defaultValue: 1
+      },
+      out: {
+        title: '手動扣庫',
+        label: '扣庫數量',
+        button: '確認扣庫',
+        reason: '手動扣庫',
+        defaultValue: 1
+      },
+      set: {
+        title: '校正庫存',
+        label: '校正後數量',
+        button: '確認校正',
+        reason: '手動校正',
+        defaultValue: null
+      }
+    };
+
+    return meta[action] || meta.in;
+  }
+
+  function calculateInventoryAfterQty(beforeQty, action, amount) {
+    if (action === 'set') return amount;
+    if (action === 'out') return beforeQty - amount;
+    return beforeQty + amount;
+  }
+
+  function openInventoryAdjustModal(item, action) {
+    const modal = document.getElementById('inventoryAdjustModal');
+    const title = document.getElementById('inventoryAdjustTitle');
+    const subtitle = document.getElementById('inventoryAdjustSubtitle');
+    const currentQty = document.getElementById('inventoryAdjustCurrentQty');
+    const amountLabel = document.getElementById('inventoryAdjustAmountLabel');
+    const amountInput = document.getElementById('inventoryAdjustAmount');
+    const noteInput = document.getElementById('inventoryAdjustNote');
+    const confirmBtn = document.getElementById('confirmInventoryAdjust');
+    if (!modal || !amountInput) return;
+
+    const meta = getInventoryActionMeta(action);
+    const stock = Number(item.stock || 0);
+    pendingInventoryAdjustment = { itemId: item.id, action };
+
+    if (title) title.textContent = `${meta.title}：${item.name}`;
+    if (subtitle) subtitle.textContent = `目前庫存 ${stock}，異動會寫入庫存紀錄`;
+    if (currentQty) currentQty.textContent = String(stock);
+    if (amountLabel) amountLabel.textContent = meta.label;
+    if (confirmBtn) confirmBtn.textContent = meta.button;
+
+    amountInput.value = String(meta.defaultValue === null ? stock : meta.defaultValue);
+    amountInput.min = '0';
+    amountInput.select?.();
+    if (noteInput) noteInput.value = '';
+
+    updateInventoryAdjustPreview();
+    modal.classList.add('active');
+    setTimeout(() => {
+      amountInput.focus();
+      amountInput.select();
+    }, 50);
+  }
+
+  function closeInventoryAdjustModal() {
+    document.getElementById('inventoryAdjustModal')?.classList.remove('active');
+    pendingInventoryAdjustment = null;
+  }
+
+  function updateInventoryAdjustPreview() {
+    const preview = document.getElementById('inventoryAdjustPreview');
+    const amountInput = document.getElementById('inventoryAdjustAmount');
+    if (!preview || !amountInput || !pendingInventoryAdjustment) return;
+
+    const item = inventoryItems[pendingInventoryAdjustment.itemId];
+    if (!item) return;
+
+    const beforeQty = Number(item.stock || 0);
+    const amount = Number(amountInput.value);
+    const afterQty = Number.isFinite(amount)
+      ? calculateInventoryAfterQty(beforeQty, pendingInventoryAdjustment.action, amount)
+      : beforeQty;
+    const delta = afterQty - beforeQty;
+    const deltaText = delta === 0 ? '無變化' : `${delta > 0 ? '+' : ''}${delta}`;
+
+    preview.classList.toggle('negative', afterQty < 0);
+    preview.innerHTML = `
+      <span>調整後</span>
+      <strong>${afterQty}</strong>
+      <small>${deltaText}</small>
+    `;
+  }
+
+  async function submitInventoryAdjustment(event) {
+    event.preventDefault();
+
+    if (!pendingInventoryAdjustment) return;
+
+    const item = inventoryItems[pendingInventoryAdjustment.itemId];
+    const amountInput = document.getElementById('inventoryAdjustAmount');
+    const noteInput = document.getElementById('inventoryAdjustNote');
+    if (!item || !amountInput) return;
+
+    const amount = Number(amountInput.value);
     if (!Number.isFinite(amount) || amount < 0) {
       showToast('請輸入有效數量');
       return;
     }
 
-    const note = window.prompt('備註（可留空）', '') || '';
-    const beforeQty = Number(item.stock || 0);
-    const afterQty = action === 'set'
-      ? amount
-      : action === 'out'
-        ? beforeQty - amount
-        : beforeQty + amount;
-    const delta = afterQty - beforeQty;
+    if (pendingInventoryAdjustment.action !== 'set' && amount <= 0) {
+      showToast('入庫或扣庫數量需大於 0');
+      return;
+    }
 
+    const beforeQty = Number(item.stock || 0);
+    const afterQty = calculateInventoryAfterQty(beforeQty, pendingInventoryAdjustment.action, amount);
+    const delta = afterQty - beforeQty;
     const nextItem = Object.assign({}, item, { stock: afterQty, updatedAt: new Date() });
+    const meta = getInventoryActionMeta(pendingInventoryAdjustment.action);
     const movement = buildMovement({
       item: nextItem,
       delta,
       beforeQty,
       afterQty,
-      reason: action === 'set' ? '手動校正' : action === 'out' ? '手動扣庫' : '手動入庫',
-      note
+      reason: meta.reason,
+      note: String(noteInput?.value || '').trim()
     });
 
-    await saveInventoryWithMovements(Object.assign({}, inventoryItems, { [itemId]: nextItem }), [movement]);
-    showToast(`${item.name} 已${actionLabels[action] || '調整'}`);
+    await saveInventoryWithMovements(Object.assign({}, inventoryItems, { [item.id]: nextItem }), [movement]);
+    closeInventoryAdjustModal();
+    showToast(`${item.name} 已${meta.title}`);
   }
 
   function buildInventoryLocks(order) {
