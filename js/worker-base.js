@@ -20,6 +20,26 @@
     setTimeout(() => toast.remove(), 2200);
   }
 
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function getOrderNotes(order) {
+    return String(order?.notes || '').trim();
+  }
+
+  function renderRowNote(notes) {
+    const text = String(notes || '').trim();
+    if (!text) return '';
+    const compact = text.split(/\r?\n/).map(part => part.trim()).filter(Boolean).join(' / ');
+    return `<span class="row-note">備註: ${escapeHtml(compact)}</span>`;
+  }
+
   function openTextInputDialog({ title, label, placeholder = '', defaultValue = '', submitText = '完成', onSubmit }) {
     const overlay = document.createElement('div');
     overlay.className = 'input-dialog-overlay';
@@ -520,7 +540,8 @@
         quantity: window.utils.orderQuantity(order),
         color: order.product.mainColor || '-',
         spec: window.utils.getMainSpecLabel(order),
-        deadline: order.dates.deadline
+        deadline: order.dates.deadline,
+        notes: getOrderNotes(order)
       });
     });
 
@@ -553,7 +574,8 @@
           quantity: item.qty,
           color: window.utils.getAccessoryDisplayColor(order, item),
           spec: window.utils.getAccessoryDisplaySize(order, item),
-          deadline: order.dates.deadline
+          deadline: order.dates.deadline,
+          notes: getOrderNotes(order)
         });
       });
     });
@@ -587,6 +609,7 @@
                   <span class="row-id">${row.orderId}</span>
                   <span class="row-customer">${row.customer} x${row.quantity}</span>
                   <span class="row-deadline">${window.utils.formatDate(row.deadline)}</span>
+                  ${renderRowNote(row.notes)}
                 </div>
               `).join('')}
             </div>
@@ -757,6 +780,7 @@
                   <span class="row-id">${order.orderId}</span>
                   <span class="row-customer">${order.customerName} x${window.utils.orderQuantity(order)}</span>
                   <span class="row-date">${dateStr}</span>
+                  ${renderRowNote(order.notes)}
                 </div>
               `;
             }).join('')}
@@ -783,6 +807,7 @@
                 <span class="row-id">${order.orderId}</span>
                 <span class="row-customer">${order.customerName} x${window.utils.orderQuantity(order)}</span>
                 <span class="row-category">${window.utils.getCategoryLabel(order.product.category)}</span>
+                ${renderRowNote(order.notes)}
               </div>
             `).join('')}
           </div>
@@ -866,6 +891,17 @@
     `;
   }
 
+  function renderOrderNotes(order) {
+    const notes = getOrderNotes(order);
+    if (!notes) return '';
+    return `
+      <div class="order-notes">
+        <span class="order-notes-label">備註</span>
+        <div class="order-notes-text">${escapeHtml(notes).replace(/\r?\n/g, '<br>')}</div>
+      </div>
+    `;
+  }
+
   function renderOrderCard(order, listStatus = currentTab) {
     const perspective = getPerspectiveWorker();
     const editable = !(config.workerId === 'yan' && perspective === 'all');
@@ -892,6 +928,7 @@
         </div>
         <div class="order-card-body">
           ${renderOrderSpecs(order, displayWorker)}
+          ${renderOrderNotes(order)}
           ${renderOrderHighlights(order, workerForStatus)}
           ${editable ? renderStatusActions(order, status, workerForStatus) : renderProgressPills(progress)}
           ${getAccessoryItemsForWorker(order, displayWorker).length ? renderAccessoryPreview(order, displayWorker) : ''}
@@ -1202,6 +1239,12 @@
         ${detailRow('數量', window.utils.orderQuantity(order))}
         ${detailRow('交期', window.utils.formatFullDate(order.dates.deadline))}
       </div>
+      ${getOrderNotes(order) ? `
+        <div class="detail-block important-note-block">
+          <div class="detail-block-title">備註</div>
+          <div class="detail-notes">${escapeHtml(getOrderNotes(order)).replace(/\r?\n/g, '<br>')}</div>
+        </div>
+      ` : ''}
       ${(order.accessories.items || []).length ? `
         <div class="detail-block">
           <div class="detail-block-title">配件</div>

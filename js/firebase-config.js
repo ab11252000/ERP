@@ -180,7 +180,13 @@ window.firebaseConfig = firebaseConfig;
       }
       const dimensions = this.getDimensionsString(order?.product?.dimensions);
       if (dimensions !== '-') return dimensions;
-      if (order?.product?.model && order?.product?.operationMode) return `${order.product.model} / ${order.product.operationMode}`;
+      if (order?.product?.model && order?.product?.operationMode) {
+        const parts = [order.product.model, order.product.operationMode];
+        if (order.product.hasArmrest === true) parts.push('有扶手');
+        if (order.product.hasGrid === true) parts.push('有格子');
+        else if (order.product.hasGrid === false) parts.push('無格子');
+        return parts.join(' / ');
+      }
       if (order?.product?.model) return `${order.product.model}型`;
       return '-';
     },
@@ -346,6 +352,8 @@ window.firebaseConfig = firebaseConfig;
         category: 'massage-bed',
         model: null,
         operationMode: null,
+        hasArmrest: null,
+        hasGrid: null,
         dimensions: null,
         mainColor: '米白',
         colorOption: 'standard'

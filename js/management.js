@@ -355,7 +355,21 @@
             <label class="form-label">模式</label>
             <select class="form-select product-chair-mode" data-index="${index}">
               <option value="手動">手動</option>
-              <option value="自動">自動</option>
+              <option value="電動">電動</option>
+            </select>
+          </div>
+          <div class="form-group product-chair-armrest-group" data-index="${index}" style="display: none;">
+            <label class="form-label">扶手</label>
+            <select class="form-select product-chair-armrest" data-index="${index}">
+              <option value="yes">是</option>
+              <option value="no">否</option>
+            </select>
+          </div>
+          <div class="form-group product-chair-grid-group" data-index="${index}" style="display: none;">
+            <label class="form-label">格子</label>
+            <select class="form-select product-chair-grid" data-index="${index}">
+              <option value="yes">是</option>
+              <option value="no">否</option>
             </select>
           </div>
           <div class="form-group">
@@ -376,8 +390,7 @@
             <select class="form-select product-model" data-index="${index}">
               <option value="">選擇型號</option>
               <option value="一般固定">一般固定</option>
-              <option value="羽毛">羽毛</option>
-              <option value="羽毛格子">羽毛格子</option>
+              <option value="羽毛款">羽毛款</option>
               <option value="廠商外包">廠商外包</option>
             </select>
           </div>
@@ -593,8 +606,12 @@
 
     const modelGroup = item.querySelector(`.product-model-group[data-index="${index}"]`);
     const chairModeGroup = item.querySelector(`.product-chair-mode-group[data-index="${index}"]`);
+    const armrestGroup = item.querySelector(`.product-chair-armrest-group[data-index="${index}"]`);
+    const gridGroup = item.querySelector(`.product-chair-grid-group[data-index="${index}"]`);
     if (modelGroup && chairModeGroup) {
       modelGroup.insertAdjacentElement('afterend', chairModeGroup);
+      if (armrestGroup) chairModeGroup.insertAdjacentElement('afterend', armrestGroup);
+      if (armrestGroup && gridGroup) armrestGroup.insertAdjacentElement('afterend', gridGroup);
     }
 
     item.querySelector('.product-category')?.addEventListener('change', () => handleProductCategoryChange(index));
@@ -619,6 +636,8 @@
     const category = item.querySelector('.product-category')?.value || '';
     const modelGroup = item.querySelector(`.product-model-group[data-index="${index}"]`);
     const chairModeGroup = item.querySelector(`.product-chair-mode-group[data-index="${index}"]`);
+    const chairArmrestGroup = item.querySelector(`.product-chair-armrest-group[data-index="${index}"]`);
+    const chairGridGroup = item.querySelector(`.product-chair-grid-group[data-index="${index}"]`);
     const dimensionsGroup = item.querySelector(`.product-dimensions-group[data-index="${index}"]`);
     const chairColorGroup = item.querySelector(`.product-chair-color-group[data-index="${index}"]`);
     const bedAccessories = item.querySelector(`.bed-accessories[data-index="${index}"]`);
@@ -629,6 +648,8 @@
 
     if (modelGroup) modelGroup.style.display = 'none';
     if (chairModeGroup) chairModeGroup.style.display = 'none';
+    if (chairArmrestGroup) chairArmrestGroup.style.display = 'none';
+    if (chairGridGroup) chairGridGroup.style.display = 'none';
     if (dimensionsGroup) dimensionsGroup.style.display = 'grid';
     if (chairColorGroup) chairColorGroup.style.display = 'none';
     if (quantityGroup) quantityGroup.style.display = 'block';
@@ -673,8 +694,13 @@
     const group = item.querySelector(`.product-chair-mode-group[data-index="${index}"]`);
     if (!group) return;
 
-    const showMode = model === '羽毛' || model === '羽毛格子';
+    const showMode = model === '羽毛款';
     group.style.display = showMode ? 'block' : 'none';
+
+    const armrestGroup = item.querySelector(`.product-chair-armrest-group[data-index="${index}"]`);
+    const gridGroup = item.querySelector(`.product-chair-grid-group[data-index="${index}"]`);
+    if (armrestGroup) armrestGroup.style.display = showMode ? 'block' : 'none';
+    if (gridGroup) gridGroup.style.display = showMode ? 'block' : 'none';
   }
 
   function toggleProductColorOther(index) {
@@ -854,6 +880,8 @@
             category: productData.category,
             model: productData.model,
             operationMode: productData.operationMode,
+            hasArmrest: productData.hasArmrest,
+            hasGrid: productData.hasGrid,
             dimensions: productData.dimensions,
             mainColor: productData.mainColor,
             colorOption: productData.colorOption,
@@ -891,6 +919,7 @@
     const category = item.querySelector('.product-category')?.value || '';
     const model = item.querySelector('.product-model')?.value || null;
     const operationMode = item.querySelector('.product-chair-mode')?.value || null;
+    const isFeatherChair = (category === 'massage-chair' || category === 'repair-chair') && model === '羽毛款';
     let quantity = Math.max(1, Number(item.querySelector('.product-quantity')?.value) || 1);
     const isOutsourcedChair = category === 'massage-chair' && model === '廠商外包';
 
@@ -922,7 +951,6 @@
     }
 
     const accessories = [];
-    const modelLabel = operationMode && (model === '羽毛' || model === '羽毛格子') ? `${model} / ${operationMode}` : model;
     const sizeLabel = dimensions ? window.utils.getDimensionsString(dimensions) : (model ? `${model}型` : '-');
     const chosenColor = pillowColor || mainColor;
 
@@ -1016,7 +1044,9 @@
     return {
       category,
       model,
-      operationMode: (category === 'massage-chair' || category === 'repair-chair') && (model === '羽毛' || model === '羽毛格子') ? operationMode : null,
+      operationMode: isFeatherChair ? operationMode : null,
+      hasArmrest: isFeatherChair ? (item.querySelector('.product-chair-armrest')?.value === 'yes') : null,
+      hasGrid: isFeatherChair ? (item.querySelector('.product-chair-grid')?.value === 'yes') : null,
       quantity,
       mainColor,
       pillowColor,
