@@ -918,6 +918,7 @@
           <span class="spec-tag quantity">數量: ${window.utils.orderQuantity(order)}</span>
           ${order.product.mainColor ? `<span class="spec-tag color">皮色: ${order.product.mainColor}</span>` : ''}
           ${order.product.model ? `<span class="spec-tag">${order.product.model}型</span>` : ''}
+          ${order.accessories?.hasHole ? '<span class="spec-tag hole">大洞</span>' : ''}
         </div>
       </div>
     `;
@@ -1270,6 +1271,7 @@
         ${detailRow('品項', window.utils.getCategoryLabel(order.product.category))}
         ${detailRow('規格', window.utils.getMainSpecLabel(order))}
         ${detailRow('主色', order.product.mainColor || '-')}
+        ${order.accessories?.hasHole ? detailRow('大洞', '要') : ''}
         ${config.workerId === 'yan' && window.utils.isSpecialColor(order) ? detailRow('叫皮碼數', order.leatherYards ? `${order.leatherYards} 碼` : '未填') : ''}
         ${detailRow('數量', window.utils.orderQuantity(order))}
         ${detailRow('交期', window.utils.formatFullDate(order.dates.deadline))}

@@ -6,6 +6,7 @@ dist-usb-portable/
 .web/
 .claude/
 *.exe
+*.apk
 img/
 build/
 .vscode/

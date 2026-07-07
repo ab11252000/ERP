@@ -449,7 +449,8 @@ body {
 }
 
 .spec-tag.quantity,
-.spec-tag.color {
+.spec-tag.color,
+.spec-tag.hole {
   min-width: 88px;
   justify-content: center;
   border: 1px solid #D8B04B;
@@ -1096,7 +1097,8 @@ body[data-worker="yi"] .spec-tag.primary {
 }
 
 body[data-worker="yi"] .spec-tag.quantity,
-body[data-worker="yi"] .spec-tag.color {
+body[data-worker="yi"] .spec-tag.color,
+body[data-worker="yi"] .spec-tag.hole {
   min-width: 96px;
   font-size: 1rem;
 }

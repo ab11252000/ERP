@@ -303,6 +303,7 @@ window.firebaseConfig = firebaseConfig;
       if (order?.product?.model && order?.product?.operationMode) {
         const parts = [order.product.model, order.product.operationMode];
         if (order.product.hasArmrest === true) parts.push('有扶手');
+        else if (order.product.hasArmrest === false) parts.push('無扶手');
         if (order.product.hasGrid === true) parts.push('有格子');
         else if (order.product.hasGrid === false) parts.push('無格子');
         return parts.join(' / ');
@@ -486,6 +487,10 @@ window.firebaseConfig = firebaseConfig;
         mainColor: '米白',
         colorOption: 'standard'
       }, normalized.product || {});
+
+      if (normalized.product.operationMode === '手動') {
+        normalized.product.operationMode = '固定';
+      }
 
       normalized.accessories = Object.assign({
         items: [],

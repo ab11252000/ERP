@@ -397,7 +397,7 @@
           <div class="form-group product-chair-mode-group" data-index="${index}" style="display: none;">
             <label class="form-label">模式</label>
             <select class="form-select product-chair-mode" data-index="${index}">
-              <option value="手動">手動</option>
+              <option value="固定">固定</option>
               <option value="電動">電動</option>
             </select>
           </div>
