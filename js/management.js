@@ -1905,7 +1905,7 @@
       <div style="flex: 1;"></div>
       <button class="btn ${order.urgentFlag ? 'btn-urgent-active' : 'btn-urgent'}" onclick="window.toggleUrgentFlag('${escapeJs(order.orderId)}')">${order.urgentFlag ? '取消急件' : '設為急件'}</button>
       <button class="btn btn-secondary" onclick="document.getElementById('orderModal').classList.remove('active')">關閉</button>
-      ${order.status.stage === 'ReadyForDelivery' ? `<button class="btn btn-accent" onclick="window.markComplete('${escapeJs(order.orderId)}')">標記為已完成</button>` : ''}
+      ${order.status.stage !== 'Completed' ? `<button class="btn btn-accent" onclick="window.markComplete('${escapeJs(order.orderId)}')">${order.status.stage === 'ReadyForDelivery' ? '標記為已完成' : '強制完成訂單'}</button>` : ''}
     `;
 
     orderModal?.classList.add('active');
@@ -1989,25 +1989,18 @@
     });
   };
 
-  window.markComplete = function(orderId) {
+  window.markComplete = async function(orderId) {
     const order = orders.find(o => o.orderId === orderId);
+    if (!order) return;
+
     const nextOrders = orders.map(o => {
       if (o.orderId !== orderId) return o;
-      const updated = window.utils.cloneOrder(o);
-      updated.status.stage = 'Completed';
-      updated.completedDate = new Date();
-      updated.inventoryLocks = Object.entries(updated.inventoryLocks || {}).reduce((locks, [ruleId, lock]) => {
-        locks[ruleId] = lock.status === 'released'
-          ? lock
-          : Object.assign({}, lock, { status: 'consumed', completed: true, completedAt: new Date() });
-        return locks;
-      }, {});
-      return updated;
+      return window.utils.completeOrder(o);
     });
 
-    window.erpStore.saveOrders(nextOrders);
+    await window.erpStore.saveOrders(nextOrders);
     closeOrderModal();
-    showToast(`已標記完成：${order?.customerName || orderId}`);
+    showToast(`已完成訂單及所有工作單：${order.customerName || orderId}`);
   };
 
   function detailItem(label, value) {

@@ -468,6 +468,33 @@ window.firebaseConfig = firebaseConfig;
       return this.normalizeOrder(JSON.parse(JSON.stringify(order)));
     },
 
+    completeOrder(order, completionDate = new Date()) {
+      const completedAt = reviveDate(completionDate) || new Date();
+      const updated = this.cloneOrder(order);
+
+      ['yan', 'yi', 'you', 'xiang'].forEach(workerId => {
+        updated.workflow[workerId] = 'completed';
+        if (!updated.workflowDates[workerId]) {
+          updated.workflowDates[workerId] = new Date(completedAt);
+        }
+      });
+
+      updated.status.stage = 'Completed';
+      updated.completedDate = new Date(completedAt);
+      updated.inventoryLocks = Object.entries(updated.inventoryLocks || {}).reduce((locks, [ruleId, lock]) => {
+        locks[ruleId] = lock.status === 'released'
+          ? lock
+          : Object.assign({}, lock, {
+              status: 'consumed',
+              completed: true,
+              completedAt: new Date(completedAt)
+            });
+        return locks;
+      }, {});
+
+      return updated;
+    },
+
     normalizeOrder(order) {
       const normalized = order || {};
       normalized.quantity = this.orderQuantity(normalized);
